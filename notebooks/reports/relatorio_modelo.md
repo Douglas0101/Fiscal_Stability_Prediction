@@ -1,24 +1,29 @@
 
-# Relatório de Modelo - Predição de Estabilidade Fiscal
+# Relatório de Performance do Modelo de Estabilidade Fiscal
 
-## Resumo do Projeto
-Este relatório documenta o processo de treinamento e avaliação de um modelo de machine learning para prever a Dívida Pública (`Public Debt (% of GDP)`).
+- **Data de Geração:** 2025-07-01 16:36:03
 
-## Métricas de Avaliação
-O modelo foi avaliado no conjunto de teste (anos >= 2021).
+## Métricas de Avaliação (Conjunto de Teste)
 
 | Métrica | Valor |
 |---|---|
-| Mean Absolute Error (MAE) | 23.08 |
-| Root Mean Squared Error (RMSE) | 29.03 |
-| R-squared (R²) | -0.50 |
+| R² (R-squared) | 0.9699 |
+| RMSE (Root Mean Squared Error) | 6.8400 |
+| MAE (Mean Absolute Error) | 3.9149 |
 
-## Análise
-- O **MAE** de 23.08 indica que, em média, as previsões do modelo erram em 23.08 pontos percentuais do PIB.
-- O **R²** de -0.50 sugere que o modelo consegue explicar aproximadamente -50.3% da variância na dívida pública.
+## Hiperparâmetros Otimizados (Optuna)
 
-## Importância das Features
-O gráfico abaixo mostra as features que mais influenciaram as previsões do modelo.
-
-![Feature Importance](reports/feature_importance.png)
-*(Nota: Salve o gráfico de importância das features como 'feature_importance.png' no diretório 'reports/')*
+```json
+{
+    "max_depth": 9,
+    "n_estimators": 500,
+    "learning_rate": 0.026948022473899044,
+    "num_leaves": 95,
+    "min_child_samples": 7,
+    "subsample": 0.9744427686266666,
+    "colsample_bytree": 0.9828160165372797,
+    "random_state": 42,
+    "objective": "regression_l1",
+    "metric": "rmse"
+}
+```
