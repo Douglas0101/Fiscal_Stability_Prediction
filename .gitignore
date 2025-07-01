@@ -1,4 +1,8 @@
-# Environments
+# Arquivo .gitignore Otimizado para Projetos de MLOps com DVC
+
+# 1. Ambientes Virtuais e Dependências
+# Ignora ambientes virtuais para garantir que o projeto seja portável.
+# As dependências devem ser gerenciadas por um arquivo requirements.txt.
 .env
 .venv
 env/
@@ -7,7 +11,8 @@ ENV/
 env.bak/
 venv.bak/
 
-# Python cache
+# 2. Caches e Arquivos Gerados pelo Python
+# Ignora arquivos de cache e bytecode para manter o repositório limpo.
 __pycache__/
 *.py[cod]
 *$py.class
@@ -17,48 +22,71 @@ __pycache__/
 .tox/
 .nox/
 
-# IDEs and editors
+# 3. Configurações de IDEs e Editores
+# Ignora arquivos específicos do ambiente de desenvolvimento de cada colaborador.
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
 
-# Operating System files
+# 4. Arquivos de Sistema Operacional
+# Ignora metadados de sistema operacional.
 .DS_Store
 Thumbs.db
 
-# Build and distribution
+# 5. Arquivos de Build e Distribuição
+# Ignora artefatos de build de pacotes Python.
 build/
 dist/
 eggs/
 *.egg-info/
 *.egg
 
-# ML & Data Science
-mlruns/
+# 6. Ferramentas de ML e Dados (DVC e MLflow)
+# -----------------------------------------------------------------------------
+# CRÍTICO: Ignora o cache do DVC e os logs do MLflow.
+# Os metadados (.dvc files) SÃO versionados, mas o cache de dados não.
+# -----------------------------------------------------------------------------
 .dvc/cache
+mlruns/
 
-# Data files (handled by DVC)
-data/01_raw/
-data/02_processed/
-data/03_final/
-data/04_features/
+# 7. Dados, Modelos e Relatórios (ESTRUTURA vs. CONTEÚDO)
+# -----------------------------------------------------------------------------
+# REPARO PRINCIPAL: Ignora o CONTEÚDO das pastas, mas não as pastas em si.
+# Isso permite que a estrutura de diretórios do projeto seja visível no GitHub,
+# o que é excelente para demonstrar suas habilidades de organização.
+#
+# Crie um arquivo vazio chamado .gitkeep em cada uma destas pastas
+# (ex: data/01_raw/.gitkeep) para garantir que o Git as rastreie.
+# -----------------------------------------------------------------------------
+data/01_raw/*
+!data/01_raw/.gitkeep
 
-# Models
-models/*.joblib
+data/02_processed/*
+!data/02_processed/.gitkeep
 
-# Notebooks
+data/03_final/*
+!data/03_final/.gitkeep
+
+data/04_features/*
+!data/04_features/.gitkeep
+
+models/*
+!models/.gitkeep
+
+reports/*
+!reports/.gitkeep
+
+# 8. Arquivos de Notebooks
+# -----------------------------------------------------------------------------
+# Ignora checkpoints de notebooks, mas MANTÉM os notebooks.
+# Notebooks são importantes para demonstração e exploração.
+# -----------------------------------------------------------------------------
 .ipynb_checkpoints/
-# Ignore notebook output cells by configuring git:
-# git config --global filter.strip-notebook-output.clean 'jupyter nbconvert --to notebook --ClearOutputPreprocessor.enabled=True --stdout'
-# And adding this to .gitattributes:
-# *.ipynb filter=strip-notebook-output
 
-# Reports & Logs
-reports/
+# 9. Arquivos Temporários e Logs
+# Ignora arquivos de log e outros arquivos temporários.
 *.log
-*.json
-
-# Temporary files
 temp_execution.py
+

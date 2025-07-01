@@ -1,182 +1,124 @@
+# src/train.py (Versão Final Corrigida)
 import pandas as pd
 import numpy as np
+import lightgbm as lgb
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import joblib
 import json
-import os
-import shap
-import mlflow
-import mlflow.sklearn
-from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestRegressor
-from xgboost import XGBRegressor
-from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
+import re
+import matplotlib.pyplot as plt
+import seaborn as sns
+from src import config
 
-from . import config
-from . import data_processing
 
-def gerar_relatorios(modelo, metrics, feature_names, X_test_data,
-                     output_dir=config.REPORTS_DIR):
-    """Gera relatórios de performance e análise em formatos JSON e Markdown."""
-    os.makedirs(output_dir, exist_ok=True)
+def train_model(df: pd.DataFrame):
+    """
+    Treina, avalia e salva o modelo de machine learning.
 
-    # Extrair parâmetros do modelo
-    params = modelo.named_steps['model'].get_params()
+    Args:
+        df (pd.DataFrame): O DataFrame final com todas as features.
+    """
+    # --- Preparação para Modelagem ---
+    print("--- Preparando Dados para Modelagem ---")
 
-    # Análise SHAP
-    explainer = shap.TreeExplainer(modelo.named_steps['model'])
-    shap_values = explainer.shap_values(X_test_data)
-    mean_abs_shap = np.abs(shap_values).mean(axis=0)
-    feature_importance_df = pd.DataFrame({
-        'feature': feature_names,
-        'importance': mean_abs_shap
-    }).sort_values(by='importance', ascending=False)
+    # CORREÇÃO: Sanitizar nomes das colunas para o LightGBM
+    original_target_name = config.TARGET_VARIABLE
+    sanitized_columns = {col: re.sub(r'[^A-Za-z0-9_]+', '_', col) for col in df.columns}
+    df.rename(columns=sanitized_columns, inplace=True)
 
-    report_data = {
-        'model_name': type(modelo.named_steps['model']).__name__,
-        'model_performance': metrics,
-        'hyperparameters': params,
-        'feature_importance': feature_importance_df.to_dict(orient='records')
+    target_variable_sanitized = sanitized_columns[original_target_name]
+    print(f"Nomes das colunas sanitizados. Novo nome da variável alvo: {target_variable_sanitized}")
+
+    # =============================================================================
+    # CORREÇÃO CRÍTICA: Remover TODAS as colunas não-numéricas e de ID
+    # antes de definir X e y, utilizando a lista COLS_TO_DROP do config.
+    # =============================================================================
+
+    # Mapeia os nomes originais das colunas a serem dropadas para os seus nomes sanitizados
+    cols_to_drop_sanitized = [sanitized_columns.get(col) for col in config.COLS_TO_DROP if col in sanitized_columns]
+
+    # Garante que a variável alvo também está na lista de colunas a serem removidas de X
+    if target_variable_sanitized not in cols_to_drop_sanitized:
+        cols_to_drop_sanitized.append(target_variable_sanitized)
+
+    print(f"Colunas a serem removidas do conjunto de features: {cols_to_drop_sanitized}")
+
+    # Define features (X) e variável alvo (y)
+    y = df[target_variable_sanitized]
+    X = df.drop(columns=cols_to_drop_sanitized)
+
+    # Verifica se alguma coluna não-numérica ainda existe em X
+    non_numeric_cols = X.select_dtypes(include=['object']).columns.tolist()
+    if non_numeric_cols:
+        raise TypeError(f"Erro: Colunas não-numéricas encontradas no conjunto de features: {non_numeric_cols}")
+
+    # Dividir em treino e teste com base no ano
+    train_mask = df['year'] < config.TEST_SPLIT_YEAR
+    test_mask = df['year'] >= config.TEST_SPLIT_YEAR
+
+    X_train, X_test = X[train_mask], X[test_mask]
+    y_train, y_test = y[train_mask], y[test_mask]
+
+    print(f"Tamanho do conjunto de treino: {X_train.shape[0]} amostras")
+    print(f"Tamanho do conjunto de teste: {X_test.shape[0]} amostras")
+
+    # --- Treinamento do Modelo ---
+    print("\n--- Treinando o Modelo LightGBM ---")
+    lgbm = lgb.LGBMRegressor(random_state=config.RANDOM_STATE)
+    lgbm.fit(X_train, y_train)
+    print("Modelo treinado com sucesso.")
+
+    # Salvar o modelo treinado
+    joblib.dump(lgbm, config.MODEL_FILE)
+
+    # --- Avaliação do Modelo ---
+    print("\n--- Avaliando o Modelo ---")
+    y_pred = lgbm.predict(X_test)
+    mae = mean_absolute_error(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    r2 = r2_score(y_test, y_pred)
+
+    print(f"Mean Absolute Error (MAE): {mae:.2f}")
+    print(f"Root Mean Squared Error (RMSE): {rmse:.2f}")
+    print(f"R-squared (R²): {r2:.2f}")
+
+    # --- Salvando Artefatos ---
+    print("\n--- Salvando Artefatos Finais ---")
+
+    # Salvar resultados em JSON
+    feature_importance_list = [int(x) for x in lgbm.feature_importances_]
+    results = {
+        'metrics': {'mae': mae, 'rmse': rmse, 'r2': r2},
+        'parameters': {'test_split_year': config.TEST_SPLIT_YEAR, 'random_state': config.RANDOM_STATE},
+        'feature_importance': dict(zip(X.columns, feature_importance_list))
     }
-
-    # Salvar JSON
     with open(config.JSON_REPORT_FILE, 'w') as f:
-        json.dump(report_data, f, indent=4, default=lambda x: str(x))
-    print(f"Relatório JSON salvo em: {config.JSON_REPORT_FILE}")
+        json.dump(results, f, indent=4)
 
-    # Gerar Markdown
-    md_content = f"""# Relatório do Modelo: {report_data['model_name']}
+    # Salvar gráfico de importância das features
+    feature_imp = pd.DataFrame(sorted(zip(lgbm.feature_importances_, X.columns)), columns=['Valor', 'Feature'])
+    plt.figure(figsize=(12, 8))
+    sns.barplot(x="Valor", y="Feature", data=feature_imp.sort_values(by="Valor", ascending=False))
+    plt.title('Importância das Features', fontsize=16)
+    plt.xlabel('Importância')
+    plt.ylabel('Feature')
+    plt.tight_layout()
+    plt.savefig(f"{config.REPORTS_DIR}/feature_importance.png")
+    plt.close()
 
-## 1. Resumo da Performance
-
-- **R-quadrado (R²):** {metrics['r2']:.4f}
-- **Erro Médio Absoluto (MAE):** {metrics['mae']:.4f}
-- **Raiz do Erro Quadrático Médio (RMSE):** {metrics['rmse']:.4f}
-
-## 2. Hiperparâmetros do Modelo Final
-
-```json
-{json.dumps(params, indent=4, default=lambda x: str(x))}
-```
-
-## 3. Importância das Features (Top 10)
-
-| Rank | Feature | Importância (SHAP) |
-|:----:|:--------|:-------------------|
+    # Criar e salvar relatório em Markdown
+    report_md = f"""
+# Relatório de Modelo - Predição de Estabilidade Fiscal
+## Resumo do Projeto
+Este relatório documenta o processo de treinamento e avaliação de um modelo para prever a `{original_target_name}`.
+## Métricas de Avaliação
+| Métrica | Valor |
+|---|---|
+| MAE | {mae:.2f} |
+| RMSE | {rmse:.2f} |
+| R² | {r2:.2f} |
+## Importância das Features
+![Feature Importance](feature_importance.png)
 """
-    for i, row in enumerate(feature_importance_df.head(10).itertuples(), 1):
-        md_content += f"| {i} | {row.feature} | {row.importance:.4f} |
-"
-
     with open(config.MD_REPORT_FILE, 'w') as f:
-        f.write(md_content)
-    print(f"Relatório Markdown salvo em: {config.MD_REPORT_FILE}")
-
-
-def run_training():
-    """Executa o pipeline completo de treinamento, otimização e avaliação."""
-
-    mlflow.set_experiment("Previsao_Estabilidade_Fiscal")
-
-    with mlflow.start_run() as run:
-        print(f"Iniciando run do MLflow: {run.info.run_id}")
-        mlflow.log_param("test_split_year", config.TEST_SPLIT_YEAR)
-
-        # 1. Processamento de Dados
-        df = data_processing.pipeline_completo_de_dados()
-        # X e y são definidos aqui para uso no SHAP e avaliação
-        X = df.drop(columns=config.COLS_TO_DROP)
-        y = df[config.TARGET_VARIABLE]
-
-        X_train = df[df["year"] < config.TEST_SPLIT_YEAR].drop(
-            columns=config.COLS_TO_DROP
-        )
-        y_train = df[df["year"] < config.TEST_SPLIT_YEAR][config.TARGET_VARIABLE]
-        X_test = df[df["year"] >= config.TEST_SPLIT_YEAR].drop(
-            columns=config.COLS_TO_DROP
-        )
-        y_test = df[df["year"] >= config.TEST_SPLIT_YEAR][config.TARGET_VARIABLE]
-
-        # 2. Definição dos Pipelines e Grid de Hiperparâmetros
-        pipelines = {
-            "RandomForest": Pipeline(
-                [
-                    ("scaler", StandardScaler()),
-                    ("model", RandomForestRegressor(random_state=config.RANDOM_STATE)),
-                ]
-            ),
-            "XGBoost": Pipeline(
-                [
-                    ("scaler", StandardScaler()),
-                    ("model", XGBRegressor(random_state=config.RANDOM_STATE)),
-                ]
-            ),
-        }
-        param_grids = {
-            "RandomForest": {
-                "model__n_estimators": [100, 200],
-                "model__max_depth": [10, 20],
-                "model__min_samples_leaf": [2, 4],
-            },
-            "XGBoost": {
-                "model__n_estimators": [100, 200],
-                "model__max_depth": [3, 5],
-                "model__learning_rate": [0.05, 0.1],
-            },
-        }
-
-        # 3. Treinamento e Otimização
-        tscv = TimeSeriesSplit(n_splits=5)
-        best_score = -np.inf
-        best_model = None
-        best_model_name = ""
-
-        for model_name in pipelines.keys():
-            print(f"\n--- Treinando e otimizando {model_name} ---")
-            grid_search = GridSearchCV(
-                pipelines[model_name],
-                param_grids[model_name],
-                cv=tscv,
-                scoring="r2",
-                n_jobs=-1,
-            )
-            grid_search.fit(X_train, y_train)
-
-            if grid_search.best_score_ > best_score:
-                best_score = grid_search.best_score_
-                best_model = grid_search.best_estimator_
-                best_model_name = model_name
-                print(
-                    f"Novo melhor modelo encontrado: {model_name} com R² de {best_score:.4f}"
-                )
-
-        # 4. Avaliação, Log e Salvamento
-        print(f"\n--- Avaliação Final do Modelo Campeão: {best_model_name} ---")
-        y_pred = best_model.predict(X_test)
-        final_metrics = {
-            "r2": r2_score(y_test, y_pred),
-            "mae": mean_absolute_error(y_test, y_pred),
-            "rmse": np.sqrt(mean_squared_error(y_test, y_pred)),
-        }
-
-        # Log no MLflow
-        mlflow.log_params(best_model.named_steps["model"].get_params())
-        mlflow.log_metrics(final_metrics)
-        mlflow.set_tag("best_model", best_model_name)
-
-        # Salvar e logar o modelo como artefato
-        mlflow.sklearn.log_model(best_model, "model")
-        print("Modelo e resultados registrados no MLflow.")
-
-        # Geração de Relatórios
-        gerar_relatorios(
-            modelo=best_model,
-            metrics=final_metrics,
-            feature_names=X_test.columns,
-            X_test_data=X_test # Passando X_test para a função
-        )
-
-if __name__ == "__main__":
-    run_training()
-
+        f.write(report_md)
