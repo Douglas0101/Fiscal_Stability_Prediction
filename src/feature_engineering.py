@@ -1,39 +1,50 @@
 # src/feature_engineering.py
+
 import pandas as pd
-from src import config
+from typing import List
 
 
-def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
+def create_temporal_features(
+        df: pd.DataFrame,
+        target_col: str,
+        lag_features: List[str],
+        entity_col: str,
+        lags: List[int] = [1, 2, 3],
+        rolling_windows: List[int] = [3, 5]
+) -> pd.DataFrame:
     """
-    Cria novas features (lags e estatísticas móveis) no DataFrame.
-
-    Args:
-        df (pd.DataFrame): O DataFrame processado.
-
-    Returns:
-        pd.DataFrame: O DataFrame com as novas features.
+    Cria features temporais de forma robusta, agrupando por entidade
+    e tratando NaNs com imputação para frente e para trás.
     """
-    df_feat = df.copy()
+    print("Iniciando a criação de features temporais...")
 
-    # Agrupar por país para criar features temporais corretamente
-    grouped = df_feat.groupby("country_id")
+    df_featured = df.sort_values([entity_col, 'year']).copy()
+    df_featured['year_feature'] = df_featured['year']
+    available_features = [col for col in lag_features if col in df_featured.columns]
 
-    # Criar Lags
-    for col in config.LAG_FEATURES:
-        if col in df_feat.columns:
-            df_feat[f'{col}_lag1'] = grouped[col].shift(1)
-            df_feat[f'{col}_lag2'] = grouped[col].shift(2)
+    for col in available_features:
+        print(f"Processando features para a coluna: '{col}'")
+        for lag in lags:
+            df_featured[f'{col}_lag{lag}'] = df_featured.groupby(entity_col)[col].shift(lag)
+        for window in rolling_windows:
+            df_featured[f'{col}_rolling_mean_{window}'] = df_featured.groupby(entity_col)[col].shift(1).rolling(
+                window=window, min_periods=1).mean()
+        df_featured[f'{col}_diff_1'] = df_featured.groupby(entity_col)[col].diff(1)
 
-    # Criar Estatísticas Móveis
-    for col in config.ROLLING_FEATURES:
-        if col in df_feat.columns:
-            # Garante que o índice seja resetado para alinhar corretamente após o rolling
-            rolling_mean = grouped[col].rolling(window=3, min_periods=1).mean().reset_index(level=0, drop=True)
-            rolling_std = grouped[col].rolling(window=3, min_periods=1).std().reset_index(level=0, drop=True)
-            df_feat[f'{col}_roll_mean3'] = rolling_mean
-            df_feat[f'{col}_roll_std3'] = rolling_std
+    # --- Tratamento Robusto de NaNs ---
+    print(f"\nDataFrame shape antes da imputação de NaNs: {df_featured.shape}")
 
-    # Remover linhas com NaN gerados pelos lags/rolling e resetar o índice
-    df_featured = df_feat.dropna().reset_index(drop=True)
+    df_featured = df_featured.groupby(entity_col, group_keys=False).apply(lambda group: group.ffill().bfill())
+    df_featured.dropna(inplace=True)
+
+    print(f"DataFrame shape após a imputação: {df_featured.shape}")
+
+    # --- Verificação de Sanidade ---
+    if df_featured.empty:
+        raise ValueError(
+            "O DataFrame ficou vazio após a engenharia de features e tratamento de NaNs. Verifique a qualidade dos dados de entrada.")
+
+    if target_col in df_featured.columns:
+        df_featured.rename(columns={target_col: 'target'}, inplace=True)
 
     return df_featured

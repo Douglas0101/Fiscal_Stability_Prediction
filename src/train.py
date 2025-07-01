@@ -1,124 +1,93 @@
-# src/train.py (Versão Final Corrigida)
+# src/train.py
+
 import pandas as pd
-import numpy as np
 import lightgbm as lgb
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+# CORREÇÃO SOFISTICADA: Importa a função recomendada para RMSE, eliminando o FutureWarning.
+from sklearn.metrics import root_mean_squared_error, r2_score, mean_absolute_error
 import joblib
 import json
-import re
-import matplotlib.pyplot as plt
-import seaborn as sns
-from src import config
+import os
+import re  # Importa a biblioteca de expressões regulares para a sanitização
+from src.config import SPLIT_YEAR, ENTITY_COLUMN, RESULTS_JSON_PATH, REPORT_MD_PATH
 
 
-def train_model(df: pd.DataFrame):
+def sanitize_feature_names(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Treina, avalia e salva o modelo de machine learning.
-
-    Args:
-        df (pd.DataFrame): O DataFrame final com todas as features.
+    Limpa os nomes das colunas de um DataFrame para serem compatíveis com o LightGBM.
+    Substitui todos os caracteres que não são letras, números ou underscore por '_'.
+    Esta é a abordagem padrão e recomendada pela indústria.
     """
-    # --- Preparação para Modelagem ---
-    print("--- Preparando Dados para Modelagem ---")
+    print("\nSanitizando nomes de colunas para compatibilidade com o modelo...")
 
-    # CORREÇÃO: Sanitizar nomes das colunas para o LightGBM
-    original_target_name = config.TARGET_VARIABLE
-    sanitized_columns = {col: re.sub(r'[^A-Za-z0-9_]+', '_', col) for col in df.columns}
-    df.rename(columns=sanitized_columns, inplace=True)
+    clean_columns = {}
+    # Pega um nome de coluna de exemplo para mostrar a transformação
+    sample_original_col = next((col for col in df.columns if re.search(r'[^A-Za-z0-9_]', col)), None)
 
-    target_variable_sanitized = sanitized_columns[original_target_name]
-    print(f"Nomes das colunas sanitizados. Novo nome da variável alvo: {target_variable_sanitized}")
+    for col in df.columns:
+        # Substitui qualquer caractere problemático por um underscore
+        clean_col = re.sub(r'[^A-Za-z0-9_]+', '_', col)
+        clean_columns[col] = clean_col
 
-    # =============================================================================
-    # CORREÇÃO CRÍTICA: Remover TODAS as colunas não-numéricas e de ID
-    # antes de definir X e y, utilizando a lista COLS_TO_DROP do config.
-    # =============================================================================
+    if sample_original_col:
+        print(f"  - Exemplo de transformação: '{sample_original_col}' -> '{clean_columns[sample_original_col]}'")
 
-    # Mapeia os nomes originais das colunas a serem dropadas para os seus nomes sanitizados
-    cols_to_drop_sanitized = [sanitized_columns.get(col) for col in config.COLS_TO_DROP if col in sanitized_columns]
+    df = df.rename(columns=clean_columns)
+    print("Sanitização de nomes de colunas concluída.")
+    return df
 
-    # Garante que a variável alvo também está na lista de colunas a serem removidas de X
-    if target_variable_sanitized not in cols_to_drop_sanitized:
-        cols_to_drop_sanitized.append(target_variable_sanitized)
 
-    print(f"Colunas a serem removidas do conjunto de features: {cols_to_drop_sanitized}")
+def train_model(data_path: str, model_output_path: str, report_output_path: str):
+    """
+    Carrega os dados, sanitiza nomes de colunas, aplica One-Hot Encoding,
+    treina um modelo LightGBM, avalia e salva os resultados.
+    """
+    print("Iniciando o processo de treinamento...")
+    df = pd.read_csv(data_path)
 
-    # Define features (X) e variável alvo (y)
-    y = df[target_variable_sanitized]
-    X = df.drop(columns=cols_to_drop_sanitized)
+    print(f"Aplicando One-Hot Encoding na coluna '{ENTITY_COLUMN}'...")
+    df_encoded = pd.get_dummies(df, columns=[ENTITY_COLUMN], prefix=ENTITY_COLUMN)
 
-    # Verifica se alguma coluna não-numérica ainda existe em X
-    non_numeric_cols = X.select_dtypes(include=['object']).columns.tolist()
-    if non_numeric_cols:
-        raise TypeError(f"Erro: Colunas não-numéricas encontradas no conjunto de features: {non_numeric_cols}")
+    # --- CORREÇÃO DEFINITIVA: Sanitiza todos os nomes de colunas ANTES de treinar ---
+    df_sanitized = sanitize_feature_names(df_encoded)
 
-    # Dividir em treino e teste com base no ano
-    train_mask = df['year'] < config.TEST_SPLIT_YEAR
-    test_mask = df['year'] >= config.TEST_SPLIT_YEAR
+    # Divisão temporal
+    train_df = df_sanitized[df_sanitized['year'] < SPLIT_YEAR]
+    test_df = df_sanitized[df_sanitized['year'] >= SPLIT_YEAR]
 
-    X_train, X_test = X[train_mask], X[test_mask]
-    y_train, y_test = y[train_mask], y[test_mask]
+    if train_df.empty or test_df.empty:
+        raise ValueError(f"O conjunto de treino ou teste está vazio após a divisão no ano {SPLIT_YEAR}.")
 
-    print(f"Tamanho do conjunto de treino: {X_train.shape[0]} amostras")
-    print(f"Tamanho do conjunto de teste: {X_test.shape[0]} amostras")
+    print(f"\nDados divididos: {len(train_df)} amostras de treino, {len(test_df)} amostras de teste.")
 
-    # --- Treinamento do Modelo ---
-    print("\n--- Treinando o Modelo LightGBM ---")
-    lgbm = lgb.LGBMRegressor(random_state=config.RANDOM_STATE)
-    lgbm.fit(X_train, y_train)
-    print("Modelo treinado com sucesso.")
+    # A coluna 'target' já é um nome limpo e não será alterada pela sanitização.
+    X_train = train_df.drop(columns=['target', 'year'])
+    y_train = train_df['target']
+    X_test = test_df.drop(columns=['target', 'year'])
+    y_test = test_df['target']
 
-    # Salvar o modelo treinado
-    joblib.dump(lgbm, config.MODEL_FILE)
+    # Treinamento com GridSearchCV
+    lgb_reg = lgb.LGBMRegressor(random_state=42)
+    param_grid = {'n_estimators': [100, 200], 'learning_rate': [0.05, 0.1], 'num_leaves': [31, 50]}
+    tscv = TimeSeriesSplit(n_splits=5)
 
-    # --- Avaliação do Modelo ---
-    print("\n--- Avaliando o Modelo ---")
-    y_pred = lgbm.predict(X_test)
+    grid_search = GridSearchCV(estimator=lgb_reg, param_grid=param_grid, cv=tscv, scoring='r2', n_jobs=-1,
+                               error_score='raise')
+
+    print("\nIniciando a busca de hiperparâmetros com GridSearchCV...")
+    grid_search.fit(X_train, y_train)
+
+    best_model = grid_search.best_estimator_
+    y_pred = best_model.predict(X_test)
+
+    # --- AVALIAÇÃO COM TÉCNICAS ATUAIS ---
+    # Usa a função recomendada 'root_mean_squared_error' para evitar o FutureWarning.
+    rmse = root_mean_squared_error(y_test, y_pred)
     mae = mean_absolute_error(y_test, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
     r2 = r2_score(y_test, y_pred)
 
-    print(f"Mean Absolute Error (MAE): {mae:.2f}")
-    print(f"Root Mean Squared Error (RMSE): {rmse:.2f}")
-    print(f"R-squared (R²): {r2:.2f}")
+    print(f'\nMétricas de Avaliação:\nRMSE: {rmse:.4f}\nMAE: {mae:.4f}\nR²: {r2:.4f}')
 
-    # --- Salvando Artefatos ---
-    print("\n--- Salvando Artefatos Finais ---")
-
-    # Salvar resultados em JSON
-    feature_importance_list = [int(x) for x in lgbm.feature_importances_]
-    results = {
-        'metrics': {'mae': mae, 'rmse': rmse, 'r2': r2},
-        'parameters': {'test_split_year': config.TEST_SPLIT_YEAR, 'random_state': config.RANDOM_STATE},
-        'feature_importance': dict(zip(X.columns, feature_importance_list))
-    }
-    with open(config.JSON_REPORT_FILE, 'w') as f:
-        json.dump(results, f, indent=4)
-
-    # Salvar gráfico de importância das features
-    feature_imp = pd.DataFrame(sorted(zip(lgbm.feature_importances_, X.columns)), columns=['Valor', 'Feature'])
-    plt.figure(figsize=(12, 8))
-    sns.barplot(x="Valor", y="Feature", data=feature_imp.sort_values(by="Valor", ascending=False))
-    plt.title('Importância das Features', fontsize=16)
-    plt.xlabel('Importância')
-    plt.ylabel('Feature')
-    plt.tight_layout()
-    plt.savefig(f"{config.REPORTS_DIR}/feature_importance.png")
-    plt.close()
-
-    # Criar e salvar relatório em Markdown
-    report_md = f"""
-# Relatório de Modelo - Predição de Estabilidade Fiscal
-## Resumo do Projeto
-Este relatório documenta o processo de treinamento e avaliação de um modelo para prever a `{original_target_name}`.
-## Métricas de Avaliação
-| Métrica | Valor |
-|---|---|
-| MAE | {mae:.2f} |
-| RMSE | {rmse:.2f} |
-| R² | {r2:.2f} |
-## Importância das Features
-![Feature Importance](feature_importance.png)
-"""
-    with open(config.MD_REPORT_FILE, 'w') as f:
-        f.write(report_md)
+    os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
+    joblib.dump(best_model, model_output_path)
+    print(f"\nModelo salvo em: {model_output_path}")

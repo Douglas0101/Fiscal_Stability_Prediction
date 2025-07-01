@@ -1,46 +1,38 @@
-# Arquivo de Configuração para o Projeto de Estabilidade Fiscal (Versão Final)
+# src/config.py
 
-# --- Caminhos de Arquivos ---
-DATA_DIR = "data"
-RAW_DATA_FILE = f"{DATA_DIR}/01_raw/world_bank_data_2025.csv"
-PROCESSED_DATA_FILE = f"{DATA_DIR}/02_processed/processed_data.csv"
-FINAL_DATA_FILE = f"{DATA_DIR}/03_final/final_data.csv"
-FEATURED_DATA_FILE = f"{DATA_DIR}/04_features/featured_data.csv"
+import os
 
-MODELS_DIR = "models"
-MODEL_FILE = f"{MODELS_DIR}/fiscal_stability_model.joblib"
+# --- Definição de Caminhos Base ---
+SRC_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SRC_DIR)
 
-REPORTS_DIR = "reports"
-JSON_REPORT_FILE = f"{REPORTS_DIR}/resultados_modelo.json"
-MD_REPORT_FILE = f"{REPORTS_DIR}/relatorio_modelo.md"
+# --- Caminhos dos Dados ---
+DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
+# CORREÇÃO: Aponta para o nome de arquivo correto 'world_bank_data_2025.csv'
+RAW_DATA_PATH = os.path.join(DATA_DIR, '01_raw', 'world_bank_data_2025.csv')
+PROCESSED_DATA_PATH = os.path.join(DATA_DIR, '02_processed', 'processed_data.csv')
+FEATURED_DATA_PATH = os.path.join(DATA_DIR, '04_features', 'featured_data.csv')
 
-# --- Parâmetros de Modelagem ---
-TARGET_VARIABLE = "Public Debt (% of GDP)"
-TEST_SPLIT_YEAR = 2021
-RANDOM_STATE = 42
+# --- Caminhos do Modelo e Relatórios ---
+MODEL_DIR = os.path.join(PROJECT_ROOT, 'models')
+MODEL_PATH = os.path.join(MODEL_DIR, 'fiscal_stability_model.joblib')
 
-# --- Listas de Features ---
-# Colunas a serem removidas antes da modelagem
-COLS_TO_DROP = ["country_name", "country_id", "year"]
+NOTEBOOKS_DIR = os.path.join(PROJECT_ROOT, 'notebooks')
+REPORTS_PATH = os.path.join(NOTEBOOKS_DIR, 'reports')
+RESULTS_JSON_PATH = os.path.join(REPORTS_PATH, 'resultados_modelo.json')
+REPORT_MD_PATH = os.path.join(REPORTS_PATH, 'relatorio_modelo.md')
 
-# Features para criar lags
-LAG_FEATURES = [
-    "Public Debt (% of GDP)",
-    "GDP Growth (% Annual)",
-    "Inflation (CPI %)",
-    "Interest Rate (Real, %)",
-    "Current Account Balance (% GDP)",
+# --- Configurações da Engenharia de Features ---
+TARGET_COLUMN = 'Public Debt (% of GDP)'
+ENTITY_COLUMN = 'country_name' # Coluna para agrupar dados por entidade (país)
+FEATURES_TO_LAG = [
+    'Public Debt (% of GDP)',
+    'GDP Growth (%)',
+    'Inflation Rate (%)',
+    'Unemployment Rate (%)',
+    'Government Budget Balance (% of GDP)',
+    'Current Account Balance (% of GDP)'
 ]
 
-# Features para criar estatísticas móveis
-ROLLING_FEATURES = ["GDP Growth (% Annual)", "Inflation (CPI %)"]
-
-
-# =============================================================================
-# PARÂMETROS DE FORECASTING (NECESSÁRIOS PARA O DASHBOARD)
-# =============================================================================
-# Define os períodos de lag a serem criados (ex: [1, 2, 3] cria lag de 1, 2 e 3 anos)
-LAG_PERIODS = [1, 2, 3]
-
-# Define a janela para as estatísticas móveis (ex: 3 para média dos últimos 3 anos)
-ROLLING_WINDOW = 3
+# --- Configurações do Modelo ---
+SPLIT_YEAR = 2021
