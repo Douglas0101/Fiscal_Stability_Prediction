@@ -1,32 +1,60 @@
 # src/data_processing.py
+
 import pandas as pd
 
 
 def process_data(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Realiza o pré-processamento e limpeza inicial dos dados.
-    Esta função é o local ideal para encapsular a lógica dos seus scripts
-    de validação, tratamento de dados ausentes e imputação.
-
-    Args:
-        df (pd.DataFrame): O DataFrame bruto.
-
-    Returns:
-        pd.DataFrame: O DataFrame processado e limpo.
+    Processa os dados brutos, renomeando colunas de forma flexível,
+    selecionando as essenciais e validando a presença das features críticas.
     """
-    print("Executando limpeza e pré-processamento de dados...")
+    print("--- Iniciando processamento de dados ---")
+    print("Colunas originais encontradas no arquivo CSV:")
+    print(df.columns.tolist())
 
-    # Exemplo de operação: Ordenar os dados, crucial para séries temporais
-    df_processed = df.sort_values(by=["country_id", "year"]).reset_index(drop=True)
+    # CORREÇÃO: Mapeamento ajustado para corresponder exatamente aos nomes do log.
+    column_mapping = {
+        # Nomes padrão já corretos
+        'country_name': 'country_name',
+        'year': 'year',
+        'Unemployment Rate (%)': 'Unemployment Rate (%)',
+        'Public Debt (% of GDP)': 'Public Debt (% of GDP)',
 
-    # Exemplo: Remover colunas que não serão usadas (se houver)
-    # df_processed = df_processed.drop(columns=['some_useless_column'], errors='ignore')
+        # Mapeamentos corrigidos com base no log
+        'GDP Growth (% Annual)': 'GDP Growth (%)',
+        'Inflation (CPI %)': 'Inflation Rate (%)',
+        'Current Account Balance (% GDP)': 'Current Account Balance (% of GDP)',
 
-    # TODO: Adicione aqui a lógica dos seus scripts:
-    # data_validation.py
-    # missing_data_eda.py
-    # data_preprocessing.py
-    # data_imputation.py
+        # Mapeamento para uma possível coluna de balanço governamental
+        'Government Expense (% of GDP)': 'Government Budget Balance (% of GDP)'  # Exemplo, pode precisar de cálculo
+    }
 
-    print("Dados processados com sucesso.")
-    return df_processed
+    df.rename(columns=column_mapping, inplace=True)
+    print("\nColunas após tentativa de mapeamento para nomes padrão:")
+    print(df.columns.tolist())
+
+    required_columns = [
+        'country_name', 'year', 'Public Debt (% of GDP)', 'GDP Growth (%)',
+        'Inflation Rate (%)', 'Unemployment Rate (%)',
+        'Government Budget Balance (% of GDP)', 'Current Account Balance (% of GDP)'
+    ]
+
+    available_columns = [col for col in required_columns if col in df.columns]
+    missing_columns = set(required_columns) - set(available_columns)
+
+    if missing_columns:
+        print(
+            f"\nAVISO: As seguintes colunas padrão não foram encontradas ou mapeadas e serão ignoradas: {missing_columns}")
+
+    critical_features = {'country_name', 'year', 'Public Debt (% of GDP)'}
+    missing_critical = critical_features.intersection(missing_columns)
+
+    if missing_critical:
+        raise ValueError(
+            f"Erro Crítico: Features essenciais estão faltando: {missing_critical}. Verifique o 'column_mapping'.")
+
+    processed_df = df[available_columns].copy()
+    processed_df['year'] = pd.to_numeric(processed_df['year'])
+
+    print("\nProcessamento de dados e mapeamento de colunas concluídos com sucesso.")
+    return processed_df
