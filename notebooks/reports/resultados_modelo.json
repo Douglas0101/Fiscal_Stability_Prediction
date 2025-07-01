@@ -1,0 +1,31 @@
+{
+    "metrics": {
+        "mae": 23.079682207013043,
+        "rmse": 29.03048899352685,
+        "r2": -0.5029507283355186
+    },
+    "parameters": {
+        "test_split_year": 2021,
+        "random_state": 42
+    },
+    "feature_importance": {
+        "GDP_Growth_Annual_": 0,
+        "Inflation_CPI_": 4,
+        "Interest_Rate_Real_": 0,
+        "Current_Account_Balance_GDP_": 4,
+        "Public_Debt_of_GDP__lag1": 18,
+        "Public_Debt_of_GDP__lag2": 0,
+        "GDP_Growth_Annual__lag1": 1,
+        "GDP_Growth_Annual__lag2": 4,
+        "Inflation_CPI__lag1": 0,
+        "Inflation_CPI__lag2": 10,
+        "Interest_Rate_Real__lag1": 10,
+        "Interest_Rate_Real__lag2": 4,
+        "Current_Account_Balance_GDP__lag1": 2,
+        "Current_Account_Balance_GDP__lag2": 8,
+        "GDP_Growth_Annual__roll_mean3": 6,
+        "GDP_Growth_Annual__roll_std3": 14,
+        "Inflation_CPI__roll_mean3": 15,
+        "Inflation_CPI__roll_std3": 0
+    }
+}
