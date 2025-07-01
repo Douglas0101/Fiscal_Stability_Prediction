@@ -1,0 +1,64 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+.tox/
+.nox/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Build and distribution
+build/
+dist/
+eggs/
+*.egg-info/
+*.egg
+
+# ML & Data Science
+mlruns/
+.dvc/cache
+
+# Data files (handled by DVC)
+data/01_raw/
+data/02_processed/
+data/03_final/
+data/04_features/
+
+# Models
+models/*.joblib
+
+# Notebooks
+.ipynb_checkpoints/
+# Ignore notebook output cells by configuring git:
+# git config --global filter.strip-notebook-output.clean 'jupyter nbconvert --to notebook --ClearOutputPreprocessor.enabled=True --stdout'
+# And adding this to .gitattributes:
+# *.ipynb filter=strip-notebook-output
+
+# Reports & Logs
+reports/
+*.log
+*.json
+
+# Temporary files
+temp_execution.py
