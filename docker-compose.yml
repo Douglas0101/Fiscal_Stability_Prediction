@@ -1,0 +1,34 @@
+services:
+  # Serviço do Backend (API FastAPI)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fiscal_backend
+    command: uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      # Monta a pasta 'src' local no diretório '/app' do contêiner.
+      # Esta é a mudança chave para corresponder ao novo Dockerfile.
+      - ./src:/app
+    environment:
+      # Os caminhos dentro do contêiner agora são relativos a /app
+      - MODEL_PATH=/app/models/best_xgb_model.pkl
+      - SCALER_PATH=/app/models/scaler.pkl
+
+  # Serviço do Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fiscal_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    depends_on:
+      - backend
