@@ -1,7 +1,7 @@
 
 # Relatório de Performance do Modelo de Estabilidade Fiscal
 
-- **Data de Geração:** 2025-07-01 16:36:03
+- **Data de Geração:** 2025-07-02 21:55:54
 
 ## Métricas de Avaliação (Conjunto de Teste)
 

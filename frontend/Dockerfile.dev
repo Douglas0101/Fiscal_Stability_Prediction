@@ -1,0 +1,15 @@
+# =======================================================
+# DOCKERFILE PARA O SERVIÇO DE FRONTEND (DESENVOLVIMENTO)
+# Local: ./frontend/Dockerfile.dev
+# =======================================================
+FROM node:18-alpine
+WORKDIR /app
+
+# Instala as dependências de build necessárias para o bcrypt
+RUN apk add --no-cache python3 make g++
+
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["npm", "run", "dev"]

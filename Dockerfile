@@ -1,55 +1,46 @@
-# --- Estágio 1: Build ---
-# Esta etapa instala todas as dependências (incluindo as de desenvolvimento)
-# e constrói a aplicação para produção.
-FROM node:18-alpine AS builder
+# =======================================================
+# DOCKERFILE PARA O SERVIÇO DE BACKEND (PYTHON) - FINAL
+# Local: Raiz do projeto (./Dockerfile)
+# =======================================================
 
-# Define o diretório de trabalho
+# --- ESTÁGIO 1: Instalação de Dependências ---
+FROM python:3.9-slim-buster AS python-deps
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential curl
+WORKDIR /usr/src/app
+COPY requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
+
+# --- ESTÁGIO 2: Aplicação Final ---
+FROM python:3.9-slim-buster
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+RUN addgroup --system app && adduser --system --group app
+COPY --from=python-deps /usr/src/app/wheels /wheels
+COPY --from=python-deps /usr/src/app/requirements.txt .
+RUN pip install --no-cache /wheels/*
 
-# Copia os arquivos de definição de pacotes. A ordem é importante para o cache do Docker.
-COPY package.json package-lock.json* ./
-
-# Usa 'npm ci' que é mais rápido e confiável para ambientes automatizados.
-# Ele instala as dependências exatas do package-lock.json
-RUN npm ci
-
-# Copia o restante do código do frontend para o contêiner
+# Copia todo o código-fonte da aplicação para o diretório de trabalho.
 COPY . .
 
-# CORREÇÃO DEFINITIVA: Executa o comando de build do Next.js diretamente com 'npx'.
-# Isso funciona mesmo que o script "build" esteja faltando no seu package.json.
-RUN npx next build
+# --- CORREÇÃO DEFINITIVA ---
+# Copia a pasta 'models' (que está na raiz do projeto) para o local
+# onde a API espera encontrá-la dentro do contêiner (/app/src/models).
+COPY models /app/src/models
 
-# --- Estágio 2: Produção ---
-# Esta etapa cria a imagem final, que é otimizada para ser leve e segura.
-FROM node:18-alpine AS runner
+# Define o usuário 'app' como proprietário de todos os arquivos, incluindo os modelos.
+RUN chown -R app:app /app
 
-WORKDIR /app
+# Muda para o usuário não-root para maior segurança.
+USER app
 
-# Define o ambiente para produção
-ENV NODE_ENV=production
+# Expõe a porta em que a API irá rodar.
+EXPOSE 8000
 
-# Cria um usuário e grupo não-root para rodar a aplicação com mais segurança
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Verificação de saúde: Garante que a API está operacional.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/docs || exit 1
 
-# Copia o package.json para instalar APENAS as dependências de produção.
-# Isso resulta em uma imagem final muito menor.
-COPY --from=builder /app/package.json ./package.json
-RUN npm ci --omit=dev && npm cache clean --force
-
-# Copia os artefatos de build do estágio anterior
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/next.config.mjs ./next.config.mjs
-
-# Define o novo usuário como dono dos arquivos e como usuário padrão
-RUN chown -R nextjs:nodejs /app
-USER nextjs
-
-# Expõe a porta que a aplicação vai usar
-EXPOSE 3000
-ENV PORT 3000
-
-# Comando para iniciar o servidor de produção do Next.js
-CMD ["npx", "next", "start"]
+# Comando de inicialização definitivo para a API.
+CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000"]

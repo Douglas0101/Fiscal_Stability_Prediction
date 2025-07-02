@@ -1,0 +1,12 @@
+# =======================================================
+# ARQUIVOS IGNORADOS PELO DOCKER (BACKEND)
+# Local: Raiz do projeto (./.dockerignore)
+# =======================================================
+.dockerignore
+.env
+.git
+.gitignore
+.idea
+__pycache__
+*.pyc
+frontend/

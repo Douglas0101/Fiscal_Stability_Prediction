@@ -1,34 +1,52 @@
+# =======================================================
+# ARQUIVO DE ORQUESTRAÇÃO PARA PRODUÇÃO
+# Local: Raiz do projeto (./docker-compose.yml)
+# =======================================================
+
+networks:
+  fiscal_net:
+    driver: bridge
+
 services:
-  # Serviço do Backend (API FastAPI)
+  db:
+    image: postgres:13
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    restart: unless-stopped
+    networks:
+      - fiscal_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: fiscal_backend
-    command: uvicorn api:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
-    volumes:
-      # Monta a pasta 'src' local no diretório '/app' do contêiner.
-      # Esta é a mudança chave para corresponder ao novo Dockerfile.
-      - ./src:/app
-    environment:
-      # Os caminhos dentro do contêiner agora são relativos a /app
-      - MODEL_PATH=/app/models/best_xgb_model.pkl
-      - SCALER_PATH=/app/models/scaler.pkl
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - fiscal_net
 
-  # Serviço do Frontend (Next.js)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: fiscal_frontend
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
     depends_on:
       - backend
+    restart: unless-stopped
+    networks:
+      - fiscal_net
+
+volumes:
+  postgres_data:
