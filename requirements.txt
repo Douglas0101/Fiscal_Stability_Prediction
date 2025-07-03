@@ -1,10 +1,41 @@
-fastapi==0.111.0
-uvicorn[standard]==0.29.0
-python-dotenv==1.0.1
-pandas==2.2.2
-numpy==1.26.4
-scikit-learn==1.5.0
-joblib==1.4.2
-shap==0.45.1
-xgboost==2.0.3
-requests==2.31.0
+# ==============================================================================
+# DEPENDÊNCIAS DO PROJETO DE PREVISÃO DE ESTABILIDADE FISCAL
+# ------------------------------------------------------------------------------
+# Este ficheiro lista todas as dependências Python necessárias para executar
+# o projeto, incluindo a API, o treinamento de modelos e os dashboards.
+# Use `pip install -r requirements.txt` para instalar tudo.
+# ==============================================================================
+
+# --- Core da API e Servidor Web ---
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.7.0
+
+# --- Banco de Dados e Autenticação ---
+sqlalchemy>=2.0.30
+psycopg2-binary>=2.9.9
+passlib[bcrypt]>=1.7.4
+
+# --- Machine Learning e Manipulação de Dados ---
+pandas>=2.2.0
+numpy>=1.26.0
+scikit-learn>=1.5.0
+joblib>=1.4.0
+
+# --- Modelagem e Treinamento ---
+lightgbm>=4.3.0
+xgboost>=2.0.3
+shap>=0.45.0
+
+# --- Otimização de Hiperparâmetros ---
+optuna>=3.6.0
+
+# --- Visualização e Dashboarding ---
+streamlit>=1.36.0
+plotly>=5.22.0
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# --- Utilitários ---
+# Para carregar variáveis de ambiente de ficheiros .env
+python-dotenv>=1.0.0
