@@ -1,70 +1,58 @@
 (base) ~/PycharmProjects/Fiscal_Stability_Prediction git:[master]
-docker-compose -f docker-compose.dev.yml up --build
+docker-compose -f docker-compose.dev.yml build --no-cache
 Compose now can delegate build to bake for better performances
 Just set COMPOSE_BAKE=true
-[+] Building 1.5s (31/31) FINISHED                                                                                                                                          docker:default
+[+] Building 98.9s (32/32) FINISHED                                                                                                                                         docker:default
  => [backend internal] load build definition from Dockerfile                                                                                                                          0.0s
  => => transferring dockerfile: 1.84kB                                                                                                                                                0.0s
  => [frontend internal] load build definition from Dockerfile.dev                                                                                                                     0.0s
- => => transferring dockerfile: 371B                                                                                                                                                  0.0s
- => [backend internal] load metadata for docker.io/library/python:3.9-slim-buster                                                                                                     0.8s
- => [frontend internal] load metadata for docker.io/library/node:18-alpine                                                                                                            0.7s
- => [frontend internal] load .dockerignore                                                                                                                                            0.0s
- => => transferring context: 255B                                                                                                                                                     0.0s
- => [frontend 1/5] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e                                                      0.0s
- => [frontend internal] load build context                                                                                                                                            0.0s
- => => transferring context: 3.65kB                                                                                                                                                   0.0s
+ => => transferring dockerfile: 476B                                                                                                                                                  0.0s
+ => [backend internal] load metadata for docker.io/library/python:3.9-slim-buster                                                                                                     2.4s
+ => [frontend internal] load metadata for docker.io/library/node:18-alpine                                                                                                            2.4s
  => [backend internal] load .dockerignore                                                                                                                                             0.0s
  => => transferring context: 313B                                                                                                                                                     0.0s
- => CACHED [frontend 2/5] WORKDIR /app                                                                                                                                                0.0s
- => CACHED [frontend 3/5] COPY package*.json ./                                                                                                                                       0.0s
- => CACHED [frontend 4/5] RUN npm install                                                                                                                                             0.0s
- => CACHED [frontend 5/5] COPY . .                                                                                                                                                    0.0s
- => [frontend] exporting to image                                                                                                                                                     0.0s
- => => exporting layers                                                                                                                                                               0.0s
- => => writing image sha256:82cb5844bd39161c12c205bd3d6cb8ae40b0ea4a18764384db2330267a526bf7                                                                                          0.0s
+ => [frontend internal] load .dockerignore                                                                                                                                            0.0s
+ => => transferring context: 255B                                                                                                                                                     0.0s
+ => [backend internal] load build context                                                                                                                                             0.0s
+ => => transferring context: 30.81kB                                                                                                                                                  0.0s
+ => [frontend 1/6] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e                                                      0.0s
+ => [frontend internal] load build context                                                                                                                                            0.0s
+ => => transferring context: 3.70kB                                                                                                                                                   0.0s
+ => CACHED [backend python-deps 1/5] FROM docker.io/library/python:3.9-slim-buster@sha256:320a7a4250aba4249f458872adecf92eea88dc6abd2d76dc5c0f01cac9b53990                            0.0s
+ => CACHED [frontend 2/6] WORKDIR /app                                                                                                                                                0.0s
+ => CACHED [backend stage-1  2/10] WORKDIR /app                                                                                                                                       0.0s
+ => [frontend 3/6] RUN apk add --no-cache python3 make g++                                                                                                                            7.1s
+ => [backend stage-1  3/10] RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*                                                      8.3s
+ => [backend python-deps 2/5] RUN apt-get update && apt-get install -y --no-install-recommends build-essential curl                                                                  20.2s
+ => [frontend 4/6] COPY package*.json ./                                                                                                                                              0.0s
+ => [frontend 5/6] RUN npm install                                                                                                                                                   12.6s 
+ => [backend stage-1  4/10] RUN addgroup --system app && adduser --system --group app                                                                                                 0.3s 
+ => [frontend 6/6] COPY . .                                                                                                                                                           0.0s 
+ => [frontend] exporting to image                                                                                                                                                     3.2s 
+ => => exporting layers                                                                                                                                                               3.1s 
+ => => writing image sha256:de800a55e13e593d17a375cfa10760aa51d8bde02f39fb2979a9b5106e7b9c76                                                                                          0.0s 
  => => naming to docker.io/library/fiscal_stability_prediction-frontend                                                                                                               0.0s 
- => [backend python-deps 1/5] FROM docker.io/library/python:3.9-slim-buster@sha256:320a7a4250aba4249f458872adecf92eea88dc6abd2d76dc5c0f01cac9b53990                                   0.0s 
- => [backend internal] load build context                                                                                                                                             0.0s 
- => => transferring context: 23.11kB                                                                                                                                                  0.0s 
+ => [backend python-deps 3/5] WORKDIR /usr/src/app                                                                                                                                    0.1s 
+ => [backend python-deps 4/5] COPY requirements.txt .                                                                                                                                 0.0s 
+ => [backend python-deps 5/5] RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt                                                             34.5s 
  => [frontend] resolving provenance for metadata file                                                                                                                                 0.0s 
- => CACHED [backend stage-1  2/10] WORKDIR /app                                                                                                                                       0.0s 
- => CACHED [backend stage-1  3/10] RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*                                               0.0s 
- => CACHED [backend stage-1  4/10] RUN addgroup --system app && adduser --system --group app                                                                                          0.0s 
- => CACHED [backend python-deps 2/5] RUN apt-get update && apt-get install -y --no-install-recommends build-essential curl                                                            0.0s 
- => CACHED [backend python-deps 3/5] WORKDIR /usr/src/app                                                                                                                             0.0s 
- => CACHED [backend python-deps 4/5] COPY requirements.txt .                                                                                                                          0.0s 
- => CACHED [backend python-deps 5/5] RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt                                                       0.0s 
- => CACHED [backend stage-1  5/10] COPY --from=python-deps /usr/src/app/wheels /wheels                                                                                                0.0s 
- => CACHED [backend stage-1  6/10] COPY --from=python-deps /usr/src/app/requirements.txt .                                                                                            0.0s 
- => CACHED [backend stage-1  7/10] RUN pip install --no-cache /wheels/*                                                                                                               0.0s 
+ => [backend stage-1  5/10] COPY --from=python-deps /usr/src/app/wheels /wheels                                                                                                       1.4s 
+ => [backend stage-1  6/10] COPY --from=python-deps /usr/src/app/requirements.txt .                                                                                                   0.0s 
+ => [backend stage-1  7/10] RUN pip install --no-cache /wheels/*                                                                                                                     36.9s 
  => [backend stage-1  8/10] COPY . .                                                                                                                                                  0.1s 
  => [backend stage-1  9/10] COPY models /app/src/models                                                                                                                               0.0s 
  => [backend stage-1 10/10] RUN chown -R app:app /app                                                                                                                                 0.4s 
- => [backend] exporting to image                                                                                                                                                      0.1s 
- => => exporting layers                                                                                                                                                               0.1s 
- => => writing image sha256:6286d45d250c8072393e08809676cca19a2b0ed137afd86f69094534a5aaf86c                                                                                          0.0s 
+ => [backend] exporting to image                                                                                                                                                      2.4s 
+ => => exporting layers                                                                                                                                                               2.4s 
+ => => writing image sha256:bcd49f47e5fb00bfca5f06094d403e6e28b5bc22801a4158b18b6eb30ee31524                                                                                          0.0s 
  => => naming to docker.io/library/fiscal_stability_prediction-backend                                                                                                                0.0s 
  => [backend] resolving provenance for metadata file                                                                                                                                  0.0s 
-WARN[0001] Found orphan containers ([fiscal_stability_prediction-db-1]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up. 
-[+] Running 4/4
- ✔ backend                                           Built                                                                                                                            0.0s 
- ✔ frontend                                          Built                                                                                                                            0.0s 
- ✔ Container fiscal_stability_prediction-frontend-1  Running                                                                                                                          0.0s 
- ✔ Container fiscal_stability_prediction-backend-1   Recreated                                                                                                                        0.3s 
-Attaching to backend-1, frontend-1
-backend-1   | INFO:     Will watch for changes in these directories: ['/app']
-backend-1   | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-backend-1   | INFO:     Started reloader process [1] using WatchFiles
-backend-1   | /usr/local/lib/python3.9/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
-backend-1   | * 'schema_extra' has been renamed to 'json_schema_extra'
-backend-1   |   warnings.warn(message, UserWarning)
-backend-1   | INFO:     Started server process [8]
-backend-1   | INFO:     Waiting for application startup.
-backend-1   | 2025-07-03 02:34:21,952 - INFO - Carregando artefatos de Machine Learning...
-backend-1   | 2025-07-03 02:34:21,952 - ERROR - Erro fatal: Arquivo de modelo ou scaler não encontrado em 'src/models/best_xgb_model.pkl' ou 'src/models/scaler.pkl'. A API não poderá servir predições.
-backend-1   | INFO:     Application startup complete.
-backend-1   | INFO:     127.0.0.1:39820 - "GET /docs HTTP/1.1" 200 OK
-
-
-w Enable Watch
+[+] Building 2/2                                                                                                                                                                           
+ ✔ backend   Built                                                                                                                                                                    0.0s 
+ ✔ frontend  Built                                                                                                                                                                    0.0s 
+ (base) ~/PycharmProjects/Fiscal_Stability_Prediction git:[master]
+docker-compose -f docker-compose.dev.yml up -d
+WARN[0000] Found orphan containers ([fiscal_stability_prediction-db-1]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up. 
+[+] Running 2/2
+ ✔ Container fiscal_stability_prediction-frontend-1  Started                                                                                                                          0.8s 
+ ✔ Container fiscal_stability_prediction-backend-1   Started                                                                                                                          0.9s 

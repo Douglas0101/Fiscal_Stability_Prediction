@@ -1,30 +1,30 @@
-# =======================================================
-# ARQUIVO DE ORQUESTRAÇÃO PARA DESENVOLVIMENTO - FINAL
-# Local: Raiz do projeto (./docker-compose.dev.yml)
-# =======================================================
-
 services:
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    command: uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
     volumes:
-      - .:/app
+      - ./src:/app/src
+    environment:
+      - PYTHONUNBUFFERED=1
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    command: npm run dev
     ports:
       - "3000:3000"
+    # Carrega as variáveis de ambiente do ficheiro .env.local
+    env_file:
+      - ./frontend/.env.local
     volumes:
       - ./frontend:/app
-      - node_modules:/app/node_modules
+      - /app/node_modules
     environment:
-      - NEXTAUTH_URL=http://localhost:3000
-      - NEXTAUTH_SECRET=sua_string_secreta_aleatoria_aqui
+      # Esta variável continua aqui pois é usada no lado do cliente (browser)
+      - NEXT_PUBLIC_API_URL=http://backend:8000
 
 volumes:
-  node_modules:
+  db_data:
