@@ -10,7 +10,7 @@ ENV PYTHONUNBUFFERED 1
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential curl
 WORKDIR /usr/src/app
 COPY requirements.txt .
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
+RUN pip install --upgrade pip && pip wheel --retries 5 --timeout 300 --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
 
 # --- ESTÁGIO 2: Aplicação Final ---
 FROM python:3.9-slim-buster

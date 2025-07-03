@@ -7,35 +7,35 @@
 # ==============================================================================
 
 # --- Core da API e Servidor Web ---
-fastapi>=0.111.0
-uvicorn[standard]>=0.29.0
-pydantic>=2.7.0
+fastapi==0.115.14
+uvicorn[standard]==0.35.0
+pydantic==2.11.7
 
 # --- Banco de Dados e Autenticação ---
-sqlalchemy>=2.0.30
-psycopg2-binary>=2.9.9
-passlib[bcrypt]>=1.7.4
+sqlalchemy==2.0.41
+psycopg2-binary==2.9.10
+passlib[bcrypt]==1.7.4
 
 # --- Machine Learning e Manipulação de Dados ---
-pandas>=2.2.0
-numpy>=1.26.0
-scikit-learn>=1.5.0
-joblib>=1.4.0
+pandas==2.3.0
+numpy==2.0.2
+scikit-learn==1.6.1
+joblib==1.5.1
 
 # --- Modelagem e Treinamento ---
-lightgbm>=4.3.0
-xgboost>=2.0.3
-shap>=0.45.0
+lightgbm==4.6.0
+xgboost==2.1.4
+shap==0.48.0
 
 # --- Otimização de Hiperparâmetros ---
-optuna>=3.6.0
+optuna==4.4.0
 
 # --- Visualização e Dashboarding ---
-streamlit>=1.36.0
-plotly>=5.22.0
-matplotlib>=3.8.0
-seaborn>=0.13.0
+streamlit==1.46.1
+plotly==6.2.0
+matplotlib==3.9.4
+seaborn==0.13.2
 
 # --- Utilitários ---
 # Para carregar variáveis de ambiente de ficheiros .env
-python-dotenv>=1.0.0
+python-dotenv==1.1.1

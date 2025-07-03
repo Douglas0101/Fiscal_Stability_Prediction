@@ -16,15 +16,13 @@ services:
       dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
-    # Carrega as variáveis de ambiente do ficheiro .env.local
-    env_file:
-      - ./frontend/.env.local
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      # Esta variável continua aqui pois é usada no lado do cliente (browser)
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - BACKEND_API_URL=http://backend:8000
+      - NEXT_PUBLIC_API_URL=/api
+      - NEXTAUTH_URL=http://localhost:3000
 
 volumes:
   db_data:

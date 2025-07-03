@@ -21,11 +21,12 @@ interface PredictionFormProps {
 
 export function PredictionForm({ features, onFeaturesChange, onPrediction, onError, setLoading, loading }: PredictionFormProps) {
   const [featureNames, setFeatureNames] = useState<string[]>([]);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   useEffect(() => {
     const fetchFeatureNames = async () => {
       try {
-        const response = await fetch("http://localhost:5000/features");
+        const response = await fetch(`${apiUrl}/features`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -57,7 +58,7 @@ export function PredictionForm({ features, onFeaturesChange, onPrediction, onErr
     onPrediction(null as any);
 
     try {
-      const response = await fetch("http://localhost:5000/predict", {
+      const response = await fetch(`${apiUrl}/predict`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
