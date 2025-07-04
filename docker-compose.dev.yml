@@ -1,45 +1,65 @@
+# ==============================================================================
+# AMBIENTE DE DESENVOLVIMENTO COM DOCKER COMPOSE
+# ------------------------------------------------------------------------------
+# Este ficheiro define os serviços necessários para o ambiente de
+# desenvolvimento, incluindo o backend da API, o banco de dados
+# e o servidor de tracking do MLflow.
+# ==============================================================================
+
+version: '3.8'
+
 services:
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: fiscaldb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+  # --- Serviço do Backend (API) ---
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile # Assumindo que o seu Dockerfile está na raiz
+    command: uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env # Carrega as variáveis de ambiente do ficheiro .env
+    depends_on:
+      - db      # Garante que o banco de dados inicie antes do backend
+      - mlflow  # Garante que o servidor MLflow inicie antes
+
+  # --- Serviço do Banco de Dados (PostgreSQL) ---
+  # Esta é a seção que foi restaurada.
+  db:
+    image: postgres:14-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=fiscaldb
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d fiscaldb"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  # --- Serviço do MLflow Tracking Server ---
+  mlflow:
+    image: python:3.9-slim
+    command: >
+      sh -c "pip install mlflow psycopg2-binary boto3 &&
+             mlflow server --host 0.0.0.0 --port 5000
+             --backend-store-uri postgresql://user:password@db:5432/fiscaldb
+             --default-artifact-root ./artifacts"
     ports:
-      - "8000:8000"
+      - "5000:5000"
     volumes:
-      - ./src:/app/src
-    environment:
-      - PYTHONUNBUFFERED=1
-      - DATABASE_URL=postgresql://user:password@db:5432/fiscaldb
+      - mlflow_data:/app/artifacts
     depends_on:
       db:
-        condition: service_healthy
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-    environment:
-      - BACKEND_API_URL=http://backend:8000
-      - NEXT_PUBLIC_API_URL=/api
-      - NEXTAUTH_URL=http://localhost:3000
+        condition: service_healthy # Espera o banco de dados estar pronto
 
 volumes:
-  db_data:
+  postgres_data:
+  mlflow_data:
+

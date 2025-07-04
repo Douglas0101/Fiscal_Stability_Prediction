@@ -1,60 +1,108 @@
-# src/data_processing.py
+# ==============================================================================
+# PIPELINE DE PROCESSAMENTO DE DADOS (VERSÃO ROBUSTA)
+# ------------------------------------------------------------------------------
+# Este script contém uma lógica de pré-processamento robusta que:
+# 1. Separa colunas de ID, Alvo e Features.
+# 2. Verifica se a coluna Alvo existe antes de tentar usá-la.
+# 3. Processa apenas as colunas de features.
+# 4. Reconstrói o dataframe final de forma segura.
+# ==============================================================================
+
+import logging
+from typing import List
 
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
+# Usa imports relativos para referenciar módulos no mesmo pacote (src)
+from .config import settings
+
+logger = logging.getLogger(__name__)
 
 
-def process_data(df: pd.DataFrame) -> pd.DataFrame:
+class DataProcessor:
     """
-    Processa os dados brutos, renomeando colunas de forma flexível,
-    selecionando as essenciais e validando a presença das features críticas.
+    Encapsula as etapas de pré-processamento APENAS para as colunas de features.
+    - Aplica StandardScaler em features numéricas.
+    - Aplica One-Hot Encoding em features categóricas.
     """
-    print("--- Iniciando processamento de dados ---")
-    print("Colunas originais encontradas no arquivo CSV:")
-    print(df.columns.tolist())
 
-    # CORREÇÃO: Mapeamento ajustado para corresponder exatamente aos nomes do log.
-    column_mapping = {
-        # Nomes padrão já corretos
-        'country_name': 'country_name',
-        'year': 'year',
-        'Unemployment Rate (%)': 'Unemployment Rate (%)',
-        'Public Debt (% of GDP)': 'Public Debt (% of GDP)',
+    def __init__(self, numeric_features: List[str], categorical_features: List[str]):
+        if not numeric_features:
+            logger.warning("Nenhuma feature numérica foi fornecida para escalonamento.")
+        self.numeric_features = numeric_features
+        self.categorical_features = categorical_features
+        self.scaler = StandardScaler()
 
-        # Mapeamentos corrigidos com base no log
-        'GDP Growth (% Annual)': 'GDP Growth (%)',
-        'Inflation (CPI %)': 'Inflation Rate (%)',
-        'Current Account Balance (% GDP)': 'Current Account Balance (% of GDP)',
+    def fit_transform(self, df_features: pd.DataFrame) -> pd.DataFrame:
+        """
+        Ajusta o processador às features e as transforma.
+        Assume que o DataFrame de entrada contém APENAS as features a serem processadas.
+        """
+        logger.info("Iniciando o processo de fit e transform das features.")
+        df_processed = df_features.copy()
 
-        # Mapeamento para uma possível coluna de balanço governamental
-        'Government Expense (% of GDP)': 'Government Budget Balance (% of GDP)'  # Exemplo, pode precisar de cálculo
-    }
+        if self.categorical_features:
+            logger.info(f"Aplicando one-hot encoding em: {self.categorical_features}")
+            df_processed = pd.get_dummies(df_processed, columns=self.categorical_features, drop_first=True, dtype=int)
 
-    df.rename(columns=column_mapping, inplace=True)
-    print("\nColunas após tentativa de mapeamento para nomes padrão:")
-    print(df.columns.tolist())
+        # Identifica as colunas numéricas que ainda existem (e não foram transformadas em dummies)
+        current_numeric_features = [col for col in self.numeric_features if col in df_processed.columns]
 
-    required_columns = [
-        'country_name', 'year', 'Public Debt (% of GDP)', 'GDP Growth (%)',
-        'Inflation Rate (%)', 'Unemployment Rate (%)',
-        'Government Budget Balance (% of GDP)', 'Current Account Balance (% of GDP)'
-    ]
+        if current_numeric_features:
+            logger.info(f"Aplicando StandardScaler em: {current_numeric_features}")
+            df_processed[current_numeric_features] = self.scaler.fit_transform(df_processed[current_numeric_features])
 
-    available_columns = [col for col in required_columns if col in df.columns]
-    missing_columns = set(required_columns) - set(available_columns)
+        logger.info("Processamento de features concluído.")
+        return df_processed
 
-    if missing_columns:
-        print(
-            f"\nAVISO: As seguintes colunas padrão não foram encontradas ou mapeadas e serão ignoradas: {missing_columns}")
 
-    critical_features = {'country_name', 'year', 'Public Debt (% of GDP)'}
-    missing_critical = critical_features.intersection(missing_columns)
+def process_data(input_path: str, output_path: str) -> None:
+    """
+    Orquestra o pipeline completo de processamento de dados, separando
+    features, IDs e alvo, processando apenas as features.
+    """
+    try:
+        logger.info(f"Carregando dados de {input_path}")
+        raw_df = pd.read_csv(input_path)
 
-    if missing_critical:
-        raise ValueError(
-            f"Erro Crítico: Features essenciais estão faltando: {missing_critical}. Verifique o 'column_mapping'.")
+        # --- 1. Separação de Colunas ---
+        id_cols_config = [settings.model.ENTITY_COLUMN, settings.model.YEAR_COLUMN]
 
-    processed_df = df[available_columns].copy()
-    processed_df['year'] = pd.to_numeric(processed_df['year'])
+        # Guarda as colunas que não serão processadas (IDs e Alvo)
+        cols_to_keep = []
+        for col in id_cols_config:
+            if col in raw_df.columns:
+                cols_to_keep.append(col)
 
-    print("\nProcessamento de dados e mapeamento de colunas concluídos com sucesso.")
-    return processed_df
+        if settings.model.TARGET_COLUMN in raw_df.columns:
+            logger.info(f"Coluna alvo '{settings.model.TARGET_COLUMN}' encontrada.")
+            cols_to_keep.append(settings.model.TARGET_COLUMN)
+        else:
+            logger.warning(
+                f"Coluna alvo '{settings.model.TARGET_COLUMN}' não encontrada. O script continuará, assumindo que é um dataset para predição.")
+
+        non_feature_df = raw_df[cols_to_keep]
+        features_df = raw_df.drop(columns=cols_to_keep, errors='ignore')
+
+        # --- 2. Processamento das Features ---
+        numeric_features = features_df.select_dtypes(include=['float64', 'int64']).columns.tolist()
+        categorical_features = features_df.select_dtypes(include=['object', 'category']).columns.tolist()
+
+        processor = DataProcessor(numeric_features=numeric_features, categorical_features=categorical_features)
+
+        processed_features_df = processor.fit_transform(features_df)
+
+        # --- 3. Reconstrução do DataFrame Final ---
+        final_df = pd.concat([non_feature_df.reset_index(drop=True), processed_features_df.reset_index(drop=True)],
+                             axis=1)
+
+        logger.info(f"Salvando dados processados em {output_path}")
+        final_df.to_csv(output_path, index=False)
+
+    except FileNotFoundError:
+        logger.error(f"Arquivo não encontrado em {input_path}", exc_info=True)
+        raise
+    except Exception as e:
+        logger.error(f"Um erro ocorreu durante o processamento dos dados: {e}", exc_info=True)
+        raise

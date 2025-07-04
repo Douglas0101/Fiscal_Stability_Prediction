@@ -1,0 +1,202 @@
+2025-07-04 23:31:25,426 - INFO - root - Logging configurado com sucesso. (logger_config.py:37)
+2025-07-04 23:37:30,001 - INFO - root - Logging configurado com sucesso. (logger_config.py:37)
+2025-07-04 23:37:30,002 - INFO - __main__ - ================================================== (main.py:54)
+2025-07-04 23:37:30,002 - INFO - __main__ - INICIANDO O PIPELINE DE PROCESSAMENTO DE DADOS (main.py:55)
+2025-07-04 23:37:30,002 - INFO - __main__ - ================================================== (main.py:56)
+2025-07-04 23:37:30,002 - INFO - src.data_processing - Carregando dados de /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/01_raw/world_bank_data_2025.csv (data_processing.py:94)
+2025-07-04 23:37:30,066 - ERROR - src.data_processing - Um erro ocorreu durante o processamento dos dados: "['fiscal_stability_index'] not found in axis" (data_processing.py:117)
+Traceback (most recent call last):
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/data_processing.py", line 107, in process_data
+    processed_df = processor.fit_transform(raw_df.drop(columns=[settings.model.TARGET_COLUMN]))
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/frame.py", line 5588, in drop
+    return super().drop(
+           ^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/generic.py", line 4807, in drop
+    obj = obj._drop_axis(labels, axis, level=level, errors=errors)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/generic.py", line 4849, in _drop_axis
+    new_axis = axis.drop(labels, errors=errors)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 7098, in drop
+    raise KeyError(f"{labels[mask].tolist()} not found in axis")
+KeyError: "['fiscal_stability_index'] not found in axis"
+2025-07-04 23:37:30,072 - ERROR - __main__ - Falha no pipeline de processamento de dados: "['fiscal_stability_index'] not found in axis" (main.py:63)
+Traceback (most recent call last):
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/main.py", line 60, in run_data_processing
+    process_data(input_path=input_path, output_path=output_path)
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/data_processing.py", line 107, in process_data
+    processed_df = processor.fit_transform(raw_df.drop(columns=[settings.model.TARGET_COLUMN]))
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/frame.py", line 5588, in drop
+    return super().drop(
+           ^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/generic.py", line 4807, in drop
+    obj = obj._drop_axis(labels, axis, level=level, errors=errors)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/generic.py", line 4849, in _drop_axis
+    new_axis = axis.drop(labels, errors=errors)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 7098, in drop
+    raise KeyError(f"{labels[mask].tolist()} not found in axis")
+KeyError: "['fiscal_stability_index'] not found in axis"
+2025-07-04 23:41:34,880 - INFO - root - Logging configurado com sucesso. (logger_config.py:37)
+2025-07-04 23:41:34,881 - INFO - __main__ - ================================================== (main.py:54)
+2025-07-04 23:41:34,881 - INFO - __main__ - INICIANDO O PIPELINE DE PROCESSAMENTO DE DADOS (main.py:55)
+2025-07-04 23:41:34,881 - INFO - __main__ - ================================================== (main.py:56)
+2025-07-04 23:41:34,881 - INFO - src.data_processing - Carregando dados de /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/01_raw/world_bank_data_2025.csv (data_processing.py:66)
+2025-07-04 23:41:34,896 - WARNING - src.data_processing - Coluna alvo 'fiscal_stability_index' não encontrada. O script continuará, assumindo que é um dataset para predição. (data_processing.py:82)
+2025-07-04 23:41:34,898 - INFO - src.data_processing - Iniciando o processo de fit e transform das features. (data_processing.py:42)
+2025-07-04 23:41:34,899 - INFO - src.data_processing - Aplicando one-hot encoding em: ['country_name', 'country_id'] (data_processing.py:46)
+2025-07-04 23:41:34,913 - INFO - src.data_processing - Aplicando StandardScaler em: ['year', 'Inflation (CPI %)', 'GDP (Current USD)', 'GDP per Capita (Current USD)', 'Unemployment Rate (%)', 'Interest Rate (Real, %)', 'Inflation (GDP Deflator, %)', 'GDP Growth (% Annual)', 'Current Account Balance (% GDP)', 'Government Expense (% of GDP)', 'Government Revenue (% of GDP)', 'Tax Revenue (% of GDP)', 'Gross National Income (USD)', 'Public Debt (% of GDP)'] (data_processing.py:53)
+2025-07-04 23:41:34,922 - INFO - src.data_processing - Processamento de features concluído. (data_processing.py:56)
+2025-07-04 23:41:34,937 - INFO - src.data_processing - Salvando dados processados em /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/02_processed/processed_data.csv (data_processing.py:100)
+2025-07-04 23:41:35,139 - INFO - __main__ - Pipeline de processamento de dados concluído com sucesso. (main.py:61)
+2025-07-04 23:44:22,702 - INFO - root - Logging configurado com sucesso. (logger_config.py:37)
+2025-07-04 23:44:22,703 - INFO - __main__ - ================================================== (main.py:68)
+2025-07-04 23:44:22,703 - INFO - __main__ - INICIANDO O PIPELINE DE TREINAMENTO DO MODELO (main.py:69)
+2025-07-04 23:44:22,704 - INFO - __main__ - ================================================== (main.py:70)
+2025-07-04 23:44:22,704 - INFO - src.train - Carregando dados processados de: /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/02_processed/processed_data.csv (train.py:34)
+2025-07-04 23:44:22,781 - INFO - src.train - Dividindo os dados para treino/teste com base no ano: 2018 (train.py:38)
+2025-07-04 23:44:22,782 - ERROR - src.train - Coluna não encontrada nos dados: 'Year'. Verifique os nomes em config.py. (train.py:123)
+Traceback (most recent call last):
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 3812, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas/_libs/index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7088, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7096, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'Year'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/train.py", line 40, in train_model
+    train_df = df[df[settings.model.YEAR_COLUMN] < settings.model.SPLIT_YEAR]
+                  ~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/frame.py", line 4107, in __getitem__
+    indexer = self.columns.get_loc(key)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 3819, in get_loc
+    raise KeyError(key) from err
+KeyError: 'Year'
+2025-07-04 23:44:22,785 - ERROR - __main__ - Falha no pipeline de treinamento do modelo: 'Year' (main.py:76)
+Traceback (most recent call last):
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 3812, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas/_libs/index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7088, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7096, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'Year'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/main.py", line 73, in run_model_training
+    train_model(data_path=input_path)
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/train.py", line 40, in train_model
+    train_df = df[df[settings.model.YEAR_COLUMN] < settings.model.SPLIT_YEAR]
+                  ~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/frame.py", line 4107, in __getitem__
+    indexer = self.columns.get_loc(key)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 3819, in get_loc
+    raise KeyError(key) from err
+KeyError: 'Year'
+2025-07-04 23:46:04,951 - INFO - root - Logging configurado com sucesso. (logger_config.py:37)
+2025-07-04 23:46:04,952 - INFO - __main__ - ================================================== (main.py:54)
+2025-07-04 23:46:04,952 - INFO - __main__ - INICIANDO O PIPELINE DE PROCESSAMENTO DE DADOS (main.py:55)
+2025-07-04 23:46:04,952 - INFO - __main__ - ================================================== (main.py:56)
+2025-07-04 23:46:04,952 - INFO - src.data_processing - Carregando dados de /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/01_raw/world_bank_data_2025.csv (data_processing.py:66)
+2025-07-04 23:46:04,967 - WARNING - src.data_processing - Coluna alvo 'fiscal_stability_index' não encontrada. O script continuará, assumindo que é um dataset para predição. (data_processing.py:82)
+2025-07-04 23:46:04,970 - INFO - src.data_processing - Iniciando o processo de fit e transform das features. (data_processing.py:42)
+2025-07-04 23:46:04,970 - INFO - src.data_processing - Aplicando one-hot encoding em: ['country_name', 'country_id'] (data_processing.py:46)
+2025-07-04 23:46:04,980 - INFO - src.data_processing - Aplicando StandardScaler em: ['Inflation (CPI %)', 'GDP (Current USD)', 'GDP per Capita (Current USD)', 'Unemployment Rate (%)', 'Interest Rate (Real, %)', 'Inflation (GDP Deflator, %)', 'GDP Growth (% Annual)', 'Current Account Balance (% GDP)', 'Government Expense (% of GDP)', 'Government Revenue (% of GDP)', 'Tax Revenue (% of GDP)', 'Gross National Income (USD)', 'Public Debt (% of GDP)'] (data_processing.py:53)
+2025-07-04 23:46:04,988 - INFO - src.data_processing - Processamento de features concluído. (data_processing.py:56)
+2025-07-04 23:46:05,001 - INFO - src.data_processing - Salvando dados processados em /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/02_processed/processed_data.csv (data_processing.py:100)
+2025-07-04 23:46:05,204 - INFO - __main__ - Pipeline de processamento de dados concluído com sucesso. (main.py:61)
+2025-07-04 23:46:36,136 - INFO - root - Logging configurado com sucesso. (logger_config.py:37)
+2025-07-04 23:46:36,137 - INFO - __main__ - ================================================== (main.py:68)
+2025-07-04 23:46:36,137 - INFO - __main__ - INICIANDO O PIPELINE DE TREINAMENTO DO MODELO (main.py:69)
+2025-07-04 23:46:36,137 - INFO - __main__ - ================================================== (main.py:70)
+2025-07-04 23:46:36,137 - INFO - src.train - Carregando dados processados de: /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/02_processed/processed_data.csv (train.py:34)
+2025-07-04 23:46:36,222 - INFO - src.train - Dividindo os dados para treino/teste com base no ano: 2018 (train.py:38)
+2025-07-04 23:46:36,227 - ERROR - src.train - Coluna não encontrada nos dados: "['fiscal_stability_index', 'Country Name'] not found in axis". Verifique os nomes em config.py. (train.py:123)
+Traceback (most recent call last):
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/train.py", line 45, in train_model
+    X_train = train_df.drop(columns=features_to_drop)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/frame.py", line 5588, in drop
+    return super().drop(
+           ^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/generic.py", line 4807, in drop
+    obj = obj._drop_axis(labels, axis, level=level, errors=errors)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/generic.py", line 4849, in _drop_axis
+    new_axis = axis.drop(labels, errors=errors)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 7098, in drop
+    raise KeyError(f"{labels[mask].tolist()} not found in axis")
+KeyError: "['fiscal_stability_index', 'Country Name'] not found in axis"
+2025-07-04 23:46:36,232 - ERROR - __main__ - Falha no pipeline de treinamento do modelo: "['fiscal_stability_index', 'Country Name'] not found in axis" (main.py:76)
+Traceback (most recent call last):
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/main.py", line 73, in run_model_training
+    train_model(data_path=input_path)
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/train.py", line 45, in train_model
+    X_train = train_df.drop(columns=features_to_drop)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/frame.py", line 5588, in drop
+    return super().drop(
+           ^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/generic.py", line 4807, in drop
+    obj = obj._drop_axis(labels, axis, level=level, errors=errors)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/generic.py", line 4849, in _drop_axis
+    new_axis = axis.drop(labels, errors=errors)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 7098, in drop
+    raise KeyError(f"{labels[mask].tolist()} not found in axis")
+KeyError: "['fiscal_stability_index', 'Country Name'] not found in axis"
+2025-07-04 23:56:23,215 - INFO - root - Logging configurado com sucesso. (logger_config.py:37)
+2025-07-04 23:56:23,216 - INFO - __main__ - ================================================== (main.py:68)
+2025-07-04 23:56:23,216 - INFO - __main__ - INICIANDO O PIPELINE DE TREINAMENTO DO MODELO (main.py:69)
+2025-07-04 23:56:23,216 - INFO - __main__ - ================================================== (main.py:70)
+2025-07-04 23:56:23,216 - INFO - src.train - Carregando dados processados de: /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/02_processed/processed_data.csv (train.py:33)
+2025-07-04 23:56:23,276 - ERROR - src.train - ERRO: A coluna alvo 'fiscal_stability_index' não foi encontrada nos dados processados. Não é possível treinar o modelo. Verifique se o seu ficheiro de dados brutos contém a variável alvo. (train.py:39)
+2025-07-04 23:56:23,276 - ERROR - src.train - Erro de validação de dados: ERRO: A coluna alvo 'fiscal_stability_index' não foi encontrada nos dados processados. Não é possível treinar o modelo. Verifique se o seu ficheiro de dados brutos contém a variável alvo. (train.py:97)
+2025-07-04 23:56:23,276 - ERROR - __main__ - Falha no pipeline de treinamento do modelo: ERRO: A coluna alvo 'fiscal_stability_index' não foi encontrada nos dados processados. Não é possível treinar o modelo. Verifique se o seu ficheiro de dados brutos contém a variável alvo. (main.py:76)
+Traceback (most recent call last):
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/main.py", line 73, in run_model_training
+    train_model(data_path=input_path)
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/train.py", line 40, in train_model
+    raise ValueError(error_msg)
+ValueError: ERRO: A coluna alvo 'fiscal_stability_index' não foi encontrada nos dados processados. Não é possível treinar o modelo. Verifique se o seu ficheiro de dados brutos contém a variável alvo.
+2025-07-04 23:58:14,925 - INFO - root - Logging configurado com sucesso. (logger_config.py:37)
+2025-07-04 23:58:14,926 - INFO - __main__ - ================================================== (main.py:54)
+2025-07-04 23:58:14,926 - INFO - __main__ - INICIANDO O PIPELINE DE PROCESSAMENTO DE DADOS (main.py:55)
+2025-07-04 23:58:14,926 - INFO - __main__ - ================================================== (main.py:56)
+2025-07-04 23:58:14,926 - INFO - src.data_processing - Carregando dados de /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/01_raw/world_bank_data_2025.csv (data_processing.py:66)
+2025-07-04 23:58:14,937 - WARNING - src.data_processing - Coluna alvo 'fiscal_stability_index' não encontrada. O script continuará, assumindo que é um dataset para predição. (data_processing.py:82)
+2025-07-04 23:58:14,938 - INFO - src.data_processing - Iniciando o processo de fit e transform das features. (data_processing.py:42)
+2025-07-04 23:58:14,939 - INFO - src.data_processing - Aplicando one-hot encoding em: ['country_name', 'country_id'] (data_processing.py:46)
+2025-07-04 23:58:14,948 - INFO - src.data_processing - Aplicando StandardScaler em: ['Inflation (CPI %)', 'GDP (Current USD)', 'GDP per Capita (Current USD)', 'Unemployment Rate (%)', 'Interest Rate (Real, %)', 'Inflation (GDP Deflator, %)', 'GDP Growth (% Annual)', 'Current Account Balance (% GDP)', 'Government Expense (% of GDP)', 'Government Revenue (% of GDP)', 'Tax Revenue (% of GDP)', 'Gross National Income (USD)', 'Public Debt (% of GDP)'] (data_processing.py:53)
+2025-07-04 23:58:14,953 - INFO - src.data_processing - Processamento de features concluído. (data_processing.py:56)
+2025-07-04 23:58:14,965 - INFO - src.data_processing - Salvando dados processados em /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/02_processed/processed_data.csv (data_processing.py:100)
+2025-07-04 23:58:15,110 - INFO - __main__ - Pipeline de processamento de dados concluído com sucesso. (main.py:61)
+2025-07-04 23:59:30,368 - INFO - root - Logging configurado com sucesso. (logger_config.py:37)
+2025-07-04 23:59:30,369 - INFO - __main__ - ================================================== (main.py:68)
+2025-07-04 23:59:30,369 - INFO - __main__ - INICIANDO O PIPELINE DE TREINAMENTO DO MODELO (main.py:69)
+2025-07-04 23:59:30,369 - INFO - __main__ - ================================================== (main.py:70)
+2025-07-04 23:59:30,369 - INFO - src.train - Carregando dados processados de: /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/02_processed/processed_data.csv (train.py:33)
+2025-07-04 23:59:30,434 - ERROR - src.train - ERRO: A coluna alvo 'fiscal_stability_index' não foi encontrada nos dados processados. Não é possível treinar o modelo. Verifique se o seu ficheiro de dados brutos contém a variável alvo. (train.py:39)
+2025-07-04 23:59:30,434 - ERROR - src.train - Erro de validação de dados: ERRO: A coluna alvo 'fiscal_stability_index' não foi encontrada nos dados processados. Não é possível treinar o modelo. Verifique se o seu ficheiro de dados brutos contém a variável alvo. (train.py:97)
+2025-07-04 23:59:30,434 - ERROR - __main__ - Falha no pipeline de treinamento do modelo: ERRO: A coluna alvo 'fiscal_stability_index' não foi encontrada nos dados processados. Não é possível treinar o modelo. Verifique se o seu ficheiro de dados brutos contém a variável alvo. (main.py:76)
+Traceback (most recent call last):
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/main.py", line 73, in run_model_training
+    train_model(data_path=input_path)
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/train.py", line 40, in train_model
+    raise ValueError(error_msg)
+ValueError: ERRO: A coluna alvo 'fiscal_stability_index' não foi encontrada nos dados processados. Não é possível treinar o modelo. Verifique se o seu ficheiro de dados brutos contém a variável alvo.

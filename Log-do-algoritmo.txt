@@ -1,8 +1,30 @@
-
-A conexão foi reiniciada
-
-A conexão com o servidor foi reiniciada durante o carregamento da página.
-
-    Este site pode estar temporariamente indisponível ou sobrecarregado. Tente novamente daqui a pouco.
-    Se você não conseguir carregar nenhuma página, verifique a conexão de rede do computador.
-    Se a rede ou o computador estiver protegido por um firewall ou proxy, verifique se o Firefox está autorizado a acessar a web.
+(base) ~/PycharmProjects/Fiscal_Stability_Prediction git:[master]
+python main.py process-data
+2025-07-04 23:58:14,925 - INFO - root - Logging configurado com sucesso. (logger_config.py:37)
+2025-07-04 23:58:14,926 - INFO - __main__ - ================================================== (main.py:54)
+2025-07-04 23:58:14,926 - INFO - __main__ - INICIANDO O PIPELINE DE PROCESSAMENTO DE DADOS (main.py:55)
+2025-07-04 23:58:14,926 - INFO - __main__ - ================================================== (main.py:56)
+2025-07-04 23:58:14,926 - INFO - src.data_processing - Carregando dados de /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/01_raw/world_bank_data_2025.csv (data_processing.py:66)
+2025-07-04 23:58:14,937 - WARNING - src.data_processing - Coluna alvo 'fiscal_stability_index' não encontrada. O script continuará, assumindo que é um dataset para predição. (data_processing.py:82)
+2025-07-04 23:58:14,938 - INFO - src.data_processing - Iniciando o processo de fit e transform das features. (data_processing.py:42)
+2025-07-04 23:58:14,939 - INFO - src.data_processing - Aplicando one-hot encoding em: ['country_name', 'country_id'] (data_processing.py:46)
+2025-07-04 23:58:14,948 - INFO - src.data_processing - Aplicando StandardScaler em: ['Inflation (CPI %)', 'GDP (Current USD)', 'GDP per Capita (Current USD)', 'Unemployment Rate (%)', 'Interest Rate (Real, %)', 'Inflation (GDP Deflator, %)', 'GDP Growth (% Annual)', 'Current Account Balance (% GDP)', 'Government Expense (% of GDP)', 'Government Revenue (% of GDP)', 'Tax Revenue (% of GDP)', 'Gross National Income (USD)', 'Public Debt (% of GDP)'] (data_processing.py:53)
+2025-07-04 23:58:14,953 - INFO - src.data_processing - Processamento de features concluído. (data_processing.py:56)
+2025-07-04 23:58:14,965 - INFO - src.data_processing - Salvando dados processados em /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/02_processed/processed_data.csv (data_processing.py:100)
+2025-07-04 23:58:15,110 - INFO - __main__ - Pipeline de processamento de dados concluído com sucesso. (main.py:61)
+(base) ~/PycharmProjects/Fiscal_Stability_Prediction git:[master]
+python main.py train-model
+2025-07-04 23:59:30,368 - INFO - root - Logging configurado com sucesso. (logger_config.py:37)
+2025-07-04 23:59:30,369 - INFO - __main__ - ================================================== (main.py:68)
+2025-07-04 23:59:30,369 - INFO - __main__ - INICIANDO O PIPELINE DE TREINAMENTO DO MODELO (main.py:69)
+2025-07-04 23:59:30,369 - INFO - __main__ - ================================================== (main.py:70)
+2025-07-04 23:59:30,369 - INFO - src.train - Carregando dados processados de: /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/data/02_processed/processed_data.csv (train.py:33)
+2025-07-04 23:59:30,434 - ERROR - src.train - ERRO: A coluna alvo 'fiscal_stability_index' não foi encontrada nos dados processados. Não é possível treinar o modelo. Verifique se o seu ficheiro de dados brutos contém a variável alvo. (train.py:39)
+2025-07-04 23:59:30,434 - ERROR - src.train - Erro de validação de dados: ERRO: A coluna alvo 'fiscal_stability_index' não foi encontrada nos dados processados. Não é possível treinar o modelo. Verifique se o seu ficheiro de dados brutos contém a variável alvo. (train.py:97)
+2025-07-04 23:59:30,434 - ERROR - __main__ - Falha no pipeline de treinamento do modelo: ERRO: A coluna alvo 'fiscal_stability_index' não foi encontrada nos dados processados. Não é possível treinar o modelo. Verifique se o seu ficheiro de dados brutos contém a variável alvo. (main.py:76)
+Traceback (most recent call last):
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/main.py", line 73, in run_model_training
+    train_model(data_path=input_path)
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/train.py", line 40, in train_model
+    raise ValueError(error_msg)
+ValueError: ERRO: A coluna alvo 'fiscal_stability_index' não foi encontrada nos dados processados. Não é possível treinar o modelo. Verifique se o seu ficheiro de dados brutos contém a variável alvo.
