@@ -2,6 +2,8 @@
 
 import pandas as pd
 import lightgbm as lgb
+import mlflow
+import mlflow.lightgbm
 import optuna
 import functools
 from sklearn.model_selection import TimeSeriesSplit
@@ -134,76 +136,98 @@ def train_model(data_path: str, model_output_path: str, report_output_path: str)
     Orquestra o processo de treinamento: carrega dados, otimiza hiperparâmetros com Optuna,
     treina o modelo final, avalia e salva os artefatos e relatórios.
     """
-    print("--- Iniciando o processo de treinamento com Calibração Final de Alta Performance ---")
-    df = pd.read_csv(data_path)
+    with mlflow.start_run():
+        print("--- Iniciando o processo de treinamento com Calibração Final de Alta Performance ---")
+        df = pd.read_csv(data_path)
 
-    print(f"\n1. Aplicando One-Hot Encoding na coluna '{ENTITY_COLUMN}'...")
-    df_encoded = pd.get_dummies(df, columns=[ENTITY_COLUMN], prefix=ENTITY_COLUMN)
+        print(f"\n1. Aplicando One-Hot Encoding na coluna '{ENTITY_COLUMN}'...")
+        df_encoded = pd.get_dummies(df, columns=[ENTITY_COLUMN], prefix=ENTITY_COLUMN)
 
-    df_sanitized = sanitize_feature_names(df_encoded)
+        df_sanitized = sanitize_feature_names(df_encoded)
 
-    train_df = df_sanitized[df_sanitized['year'] < SPLIT_YEAR]
-    test_df = df_sanitized[df_sanitized['year'] >= SPLIT_YEAR]
+        train_df = df_sanitized[df_sanitized['year'] < SPLIT_YEAR]
+        test_df = df_sanitized[df_sanitized['year'] >= SPLIT_YEAR]
 
-    if train_df.empty or test_df.empty:
-        raise ValueError(f"O conjunto de treino ou teste está vazio após a divisão no ano {SPLIT_YEAR}.")
+        if train_df.empty or test_df.empty:
+            raise ValueError(f"O conjunto de treino ou teste está vazio após a divisão no ano {SPLIT_YEAR}.")
 
-    print(f"\n2. Dados divididos: {len(train_df)} amostras de treino, {len(test_df)} amostras de teste.")
+        print(f"\n2. Dados divididos: {len(train_df)} amostras de treino, {len(test_df)} amostras de teste.")
 
-    X_train = train_df.drop(columns=['target', 'year'])
-    y_train = train_df['target']
-    X_test = test_df.drop(columns=['target', 'year'])
-    y_test = test_df['target']
+        X_train = train_df.drop(columns=['target', 'year'])
+        y_train = train_df['target']
+        X_test = test_df.drop(columns=['target', 'year'])
+        y_test = test_df['target']
 
-    print("\n3. Iniciando a busca de hiperparâmetros com Optuna (Busca Intensiva)...")
-    study_objective = functools.partial(objective, X=X_train, y=y_train)
+        print("\n3. Iniciando a busca de hiperparâmetros com Optuna (Busca Intensiva)...")
+        study_objective = functools.partial(objective, X=X_train, y=y_train)
 
-    sampler = optuna.samplers.TPESampler(seed=42)
-    # Aumentado o n_warmup_steps devido ao maior número de splits
-    study = optuna.create_study(direction='minimize', pruner=optuna.pruners.MedianPruner(n_warmup_steps=3),
-                                sampler=sampler)
+        sampler = optuna.samplers.TPESampler(seed=42)
+        # Aumentado o n_warmup_steps devido ao maior número de splits
+        study = optuna.create_study(direction='minimize', pruner=optuna.pruners.MedianPruner(n_warmup_steps=3),
+                                    sampler=sampler)
 
-    # Busca mais ampla com 300 trials
-    study.optimize(study_objective, n_trials=300, timeout=1800)  # Timeout de 30 minutos
+        # Busca mais ampla com 300 trials
+        study.optimize(study_objective, n_trials=300, timeout=1800)  # Timeout de 30 minutos
 
-    print(f"\n   -> Otimização concluída. Número de trials finalizados: {len(study.trials)}")
+        print(f"\n   -> Otimização concluída. Número de trials finalizados: {len(study.trials)}")
 
-    pruned_trials = study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.PRUNED])
-    complete_trials = study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.COMPLETE])
-    print(f"   -> Trials completos: {len(complete_trials)}, Trials podados: {len(pruned_trials)}")
+        pruned_trials = study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.PRUNED])
+        complete_trials = study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.COMPLETE])
+        print(f"   -> Trials completos: {len(complete_trials)}, Trials podados: {len(pruned_trials)}")
 
-    print("   -> Melhor trial encontrado:")
-    best_trial = study.best_trial
-    print(f"      - Valor (RMSE médio na validação cruzada): {best_trial.value:.4f}")
-    print("      - Melhores Hiperparâmetros:")
-    for key, value in best_trial.params.items():
-        print(f"        - {key}: {value}")
+        print("   -> Melhor trial encontrado:")
+        best_trial = study.best_trial
+        print(f"      - Valor (RMSE médio na validação cruzada): {best_trial.value:.4f}")
+        print("      - Melhores Hiperparâmetros:")
+        for key, value in best_trial.params.items():
+            print(f"        - {key}: {value}")
 
-    print("\n4. Treinando o modelo final com os melhores hiperparâmetros em todo o conjunto de treino...")
-    best_params = best_trial.params
-    best_params['random_state'] = 42
-    best_params['objective'] = 'regression_l1'
-    best_params['metric'] = 'rmse'
+        # Log hyperparameters to MLflow
+        mlflow.log_params(best_trial.params)
 
-    final_model = lgb.LGBMRegressor(**best_params)
-    final_model.fit(X_train, y_train)
+        print("\n4. Treinando o modelo final com os melhores hiperparâmetros em todo o conjunto de treino...")
+        best_params = best_trial.params
+        best_params['random_state'] = 42
+        best_params['objective'] = 'regression_l1'
+        best_params['metric'] = 'rmse'
 
-    y_pred = final_model.predict(X_test)
+        final_model = lgb.LGBMRegressor(**best_params)
+        final_model.fit(X_train, y_train)
 
-    rmse = root_mean_squared_error(y_test, y_pred)
-    mae = mean_absolute_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
+        y_pred = final_model.predict(X_test)
 
-    final_metrics = {'rmse': rmse, 'mae': mae, 'r2': r2}
+        rmse = root_mean_squared_error(y_test, y_pred)
+        mae = mean_absolute_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
 
-    print(f'\n5. Métricas de Avaliação Finais (no conjunto de teste):')
-    print(f'   - RMSE: {final_metrics["rmse"]:.4f}')
-    print(f'   - MAE:  {final_metrics["mae"]:.4f}')
-    print(f'   - R²:   {final_metrics["r2"]:.4f}')
+        final_metrics = {'rmse': rmse, 'mae': mae, 'r2': r2}
 
-    save_reports(report_output_path, final_metrics, best_params)
+        print(f'\n5. Métricas de Avaliação Finais (no conjunto de teste):')
+        print(f'   - RMSE: {final_metrics["rmse"]:.4f}')
+        print(f'   - MAE:  {final_metrics["mae"]:.4f}')
+        print(f'   - R²:   {final_metrics["r2"]:.4f}')
 
+        # Log metrics to MLflow
+        mlflow.log_metrics(final_metrics)
+
+        save_reports(report_output_path, final_metrics, best_params)
+
+        os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
+        joblib.dump(final_model, model_output_path)
+        print(f"\n--- Modelo otimizado com Optuna salvo com sucesso em: {model_output_path} ---")
+
+        # Log the model to MLflow
+        mlflow.lightgbm.log_model(final_model, "model")
+
+if __name__ == "__main__":
+    # Define paths based on project structure
+    data_path = "data/04_features/featured_data.csv"
+    model_output_path = "models/fiscal_stability_model.joblib"
+    report_output_path = "notebooks/reports/"
+
+    # Ensure directories exist
     os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
-    joblib.dump(final_model, model_output_path)
-    print(f"\n--- Modelo otimizado com Optuna salvo com sucesso em: {model_output_path} ---")
+    os.makedirs(report_output_path, exist_ok=True)
+
+    train_model(data_path, model_output_path, report_output_path)
 

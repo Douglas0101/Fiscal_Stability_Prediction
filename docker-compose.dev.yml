@@ -1,4 +1,18 @@
 services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: fiscaldb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d fiscaldb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: .
@@ -9,6 +23,10 @@ services:
       - ./src:/app/src
     environment:
       - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://user:password@db:5432/fiscaldb
+    depends_on:
+      db:
+        condition: service_healthy
 
   frontend:
     build:
@@ -18,7 +36,6 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend:/app
-      - /app/node_modules
     environment:
       - BACKEND_API_URL=http://backend:8000
       - NEXT_PUBLIC_API_URL=/api

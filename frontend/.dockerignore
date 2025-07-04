@@ -1,6 +1,0 @@
-# =======================================================
-# ARQUIVOS IGNORADOS PELO DOCKER (FRONTEND)
-# Local: ./frontend/.dockerignore
-# =======================================================
-.next
-node_modules

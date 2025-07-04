@@ -4,11 +4,17 @@ import pandas as pd
 import numpy as np
 import shap
 import logging
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, status, APIRouter
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
 from typing import Dict
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+
+from . import crud, models, schemas
+from .database import SessionLocal, engine, get_db
+from .auth import authenticate_user, create_access_token, get_current_active_user, ACCESS_TOKEN_EXPIRE_MINUTES
 
 # --- Configuração ---
 # Configura um logger para exibir informações úteis no console
@@ -18,13 +24,15 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Se não definidas, usa os caminhos padrão.
 MODEL_PATH = os.getenv("MODEL_PATH", "src/models/best_xgb_model.pkl")
 SCALER_PATH = os.getenv("SCALER_PATH", "src/models/scaler.pkl")
+FEATURED_DATA_PATH = os.getenv("FEATURED_DATA_PATH", "data/04_features/featured_data.csv")
+PREDICTION_RESULTS_PATH = os.getenv("PREDICTION_RESULTS_PATH", "notebooks/reports/resultados_modelo.json")
 
 
 # --- Modelo de Dados de Entrada (Pydantic) ---
 # Define a estrutura e os tipos de dados esperados na requisição
 class PredictionFeatures(BaseModel):
     taxa_de_juros: float = Field(..., example=5.0, description="Taxa de Juros Anual (%)")
-    inflacao_anual: float = Field(..., example=2.5, description="Taxa de Inflação Anual (%)")
+    inflacao_anual: float = Field(..., example=2.5, description="Taxa de Inflação Anual (%) ")
     crescimento_pib: float = Field(..., example=3.0, description="Crescimento do PIB (%)")
     divida_publica_pib: float = Field(..., example=60.0, description="Dívida Pública como % do PIB")
     balanca_comercial: float = Field(..., example=10.0, description="Balança Comercial (em Bilhões de USD)")
@@ -49,10 +57,16 @@ class PredictionFeatures(BaseModel):
 # Dicionário global para armazenar os artefatos de ML carregados
 ml_artifacts = {}
 
+def create_db_and_tables():
+    models.Base.metadata.create_all(bind=engine)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Código executado na inicialização da API
+    logging.info("Criando tabelas do banco de dados...")
+    create_db_and_tables()
+    logging.info("Tabelas do banco de dados criadas/verificadas.")
+
     logging.info("Carregando artefatos de Machine Learning...")
     try:
         model = joblib.load(MODEL_PATH)
@@ -68,6 +82,10 @@ async def lifespan(app: FastAPI):
         # Armazena a ordem correta das features, extraída do próprio modelo
         # Isso evita erros se a ordem dos dados de entrada mudar
         ml_artifacts["feature_names"] = list(model.get_booster().feature_names)
+
+        # Carrega dados de features e resultados de predição
+        ml_artifacts["featured_data"] = pd.read_csv(FEATURED_DATA_PATH).to_dict(orient="records")
+        ml_artifacts["prediction_results"] = pd.read_json(PREDICTION_RESULTS_PATH).to_dict(orient="records")
 
         logging.info("Artefatos carregados com sucesso.")
     except FileNotFoundError as e:
@@ -99,10 +117,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- Rotas de Autenticação ---
+auth_router = APIRouter()
+
+@auth_router.post("/register", response_model=schemas.User, summary="Registra um novo usuário")
+def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_email(db, email=user.email)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email já registrado")
+    return crud.create_user(db=db, user=user)
+
+@auth_router.post("/token", response_model=schemas.Token, summary="Obtém um token de acesso para autenticação")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email ou senha incorretos",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@auth_router.get("/users/me/", response_model=schemas.User, summary="Obtém informações do usuário logado")
+async def read_users_me(current_user: schemas.User = Depends(get_current_active_user)):
+    return current_user
+
+app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+
 
 # --- Endpoints da API ---
 @app.post("/predict", summary="Realiza uma nova predição de estabilidade fiscal")
-async def predict(features: PredictionFeatures) -> Dict:
+async def predict(features: PredictionFeatures, current_user: schemas.User = Depends(get_current_active_user)) -> Dict:
     """
     Recebe as features de um país, realiza a predição e retorna o resultado
     juntamente com a interpretabilidade via SHAP.
@@ -144,6 +193,54 @@ async def predict(features: PredictionFeatures) -> Dict:
         logging.error(f"Erro durante a predição: {e}")
         raise HTTPException(status_code=400, detail=f"Erro ao processar a requisição: {e}")
 
+
+@app.get("/data/features", summary="Retorna os dados de features históricos")
+async def get_features_data(current_user: schemas.User = Depends(get_current_active_user)):
+    if "featured_data" not in ml_artifacts:
+        raise HTTPException(status_code=500, detail="Dados de features não carregados.")
+    return ml_artifacts["featured_data"]
+
+@app.get("/data/predictions", summary="Retorna os resultados das predições históricas")
+async def get_predictions_data(current_user: schemas.User = Depends(get_current_active_user)):
+    if "prediction_results" not in ml_artifacts:
+        raise HTTPException(status_code=500, detail="Resultados de predição não carregados.")
+    return ml_artifacts["prediction_results"]
+
+@app.get("/data/summary", summary="Retorna métricas de resumo do modelo")
+async def get_summary_data(current_user: schemas.User = Depends(get_current_active_user)):
+    if "prediction_results" not in ml_artifacts:
+        raise HTTPException(status_code=500, detail="Resultados de predição não carregados para o resumo.")
+    
+    df_predictions = pd.DataFrame(ml_artifacts["prediction_results"])
+    
+    total_predictions = len(df_predictions)
+    stable_predictions = df_predictions[df_predictions["prediction_code"] == 0].shape[0]
+    unstable_predictions = df_predictions[df_predictions["prediction_code"] == 1].shape[0]
+    
+    # Exemplo de cálculo de média de confiança (se houver uma coluna de confiança)
+    # if "confidence" in df_predictions.columns:
+    #     avg_confidence = df_predictions["confidence"].mean()
+    # else:
+    #     avg_confidence = None
+
+    return {
+        "total_predictions": total_predictions,
+        "stable_predictions": stable_predictions,
+        "unstable_predictions": unstable_predictions,
+        # "average_confidence": avg_confidence
+    }
+
+@app.get("/data/historical", summary="Retorna dados históricos para visualização")
+async def get_historical_data(current_user: schemas.User = Depends(get_current_active_user)):
+    # Este é um exemplo. Em um cenário real, você carregaria dados de um banco de dados ou arquivo.
+    # Por simplicidade, estou retornando dados mockados.
+    return [
+        {"year": 2018, "gdp_growth": 2.5, "inflation": 3.0, "public_debt": 55.0},
+        {"year": 2019, "gdp_growth": 2.8, "inflation": 3.2, "public_debt": 57.0},
+        {"year": 2020, "gdp_growth": -4.0, "inflation": 2.0, "public_debt": 70.0},
+        {"year": 2021, "gdp_growth": 5.0, "inflation": 5.0, "public_debt": 68.0},
+        {"year": 2022, "gdp_growth": 3.5, "inflation": 6.0, "public_debt": 65.0},
+    ]
 
 @app.get("/health", summary="Verifica a saúde da API")
 def health_check():

@@ -1,55 +1,8 @@
-(base) ~/PycharmProjects/Fiscal_Stability_Prediction git:[master]
-docker-compose -f docker-compose.dev.yml up --build -d
-Compose now can delegate build to bake for better performances
-Just set COMPOSE_BAKE=true
-[+] Building 103.5s (32/32) FINISHED                                                                                                                                        docker:default
- => [backend internal] load build definition from Dockerfile                                                                                                                          0.0s
- => => transferring dockerfile: 1.90kB                                                                                                                                                0.0s
- => [frontend internal] load build definition from Dockerfile.dev                                                                                                                     0.0s
- => => transferring dockerfile: 476B                                                                                                                                                  0.0s
- => [frontend internal] load metadata for docker.io/library/node:18-alpine                                                                                                            2.5s
- => [backend internal] load metadata for docker.io/library/python:3.9-slim-buster                                                                                                     2.5s
- => [frontend internal] load .dockerignore                                                                                                                                            0.0s
- => => transferring context: 255B                                                                                                                                                     0.0s
- => [backend internal] load .dockerignore                                                                                                                                             0.0s
- => => transferring context: 313B                                                                                                                                                     0.0s
- => [frontend 1/6] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e                                                      0.0s
- => [frontend internal] load build context                                                                                                                                            0.0s
- => => transferring context: 3.73kB                                                                                                                                                   0.0s
- => [backend python-deps 1/5] FROM docker.io/library/python:3.9-slim-buster@sha256:320a7a4250aba4249f458872adecf92eea88dc6abd2d76dc5c0f01cac9b53990                                   0.0s
- => [backend internal] load build context                                                                                                                                             0.0s
- => => transferring context: 21.19kB                                                                                                                                                  0.0s
- => CACHED [frontend 2/6] WORKDIR /app                                                                                                                                                0.0s
- => CACHED [frontend 3/6] RUN apk add --no-cache python3 make g++                                                                                                                     0.0s
- => CACHED [frontend 4/6] COPY package*.json ./                                                                                                                                       0.0s
- => CACHED [frontend 5/6] RUN npm install                                                                                                                                             0.0s
- => CACHED [frontend 6/6] COPY . .                                                                                                                                                    0.0s
- => [frontend] exporting to image                                                                                                                                                     0.0s
- => => exporting layers                                                                                                                                                               0.0s
- => => writing image sha256:ca49f6a223f1f68d99127c4847003cddde15d92adc3a3e55f4acd48f6534d841                                                                                          0.0s
- => => naming to docker.io/library/fiscal_stability_prediction-frontend                                                                                                               0.0s
- => CACHED [backend python-deps 2/5] RUN apt-get update && apt-get install -y --no-install-recommends build-essential curl                                                            0.0s
- => CACHED [backend python-deps 3/5] WORKDIR /usr/src/app                                                                                                                             0.0s
- => CACHED [backend python-deps 4/5] COPY requirements.txt .                                                                                                                          0.0s
- => [backend python-deps 5/5] RUN pip install --upgrade pip && pip wheel --retries 5 --timeout 300 --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt      19.5s
- => [frontend] resolving provenance for metadata file                                                                                                                                 0.0s
- => CACHED [backend stage-1  2/10] WORKDIR /app                                                                                                                                       0.0s
- => CACHED [backend stage-1  3/10] RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*                                               0.0s
- => CACHED [backend stage-1  4/10] RUN addgroup --system app && adduser --system --group app                                                                                          0.0s
- => [backend stage-1  5/10] COPY --from=python-deps /usr/src/app/wheels /wheels                                                                                                       1.4s
- => [backend stage-1  6/10] COPY --from=python-deps /usr/src/app/requirements.txt .                                                                                                   0.0s
- => [backend stage-1  7/10] RUN pip install --no-cache /wheels/*                                                                                                                     75.9s
- => [backend stage-1  8/10] COPY . .                                                                                                                                                  0.1s
- => [backend stage-1  9/10] COPY models /app/src/models                                                                                                                               0.0s
- => [backend stage-1 10/10] RUN chown -R app:app /app                                                                                                                                 0.3s
- => [backend] exporting to image                                                                                                                                                      3.5s
- => => exporting layers                                                                                                                                                               3.5s
- => => writing image sha256:f955dfa8743e6972110ae6db06832b2521b44c7371ecdf9e46d91a69b7aa1b3c                                                                                          0.0s
- => => naming to docker.io/library/fiscal_stability_prediction-backend                                                                                                                0.0s
- => [backend] resolving provenance for metadata file                                                                                                                                  0.0s
-WARN[0103] Found orphan containers ([fiscal_stability_prediction-db-1]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up.
-[+] Running 4/4
- ✔ backend                                           Built                                                                                                                            0.0s
- ✔ frontend                                          Built                                                                                                                            0.0s
- ✔ Container fiscal_stability_prediction-backend-1   Started                                                                                                                          5.4s
- ✔ Container fiscal_stability_prediction-frontend-1  Started                                                                                                                          5.4s
+
+A conexão foi reiniciada
+
+A conexão com o servidor foi reiniciada durante o carregamento da página.
+
+    Este site pode estar temporariamente indisponível ou sobrecarregado. Tente novamente daqui a pouco.
+    Se você não conseguir carregar nenhuma página, verifique a conexão de rede do computador.
+    Se a rede ou o computador estiver protegido por um firewall ou proxy, verifique se o Firefox está autorizado a acessar a web.

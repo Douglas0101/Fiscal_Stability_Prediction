@@ -15,6 +15,7 @@ pydantic==2.11.7
 sqlalchemy==2.0.41
 psycopg2-binary==2.9.10
 passlib[bcrypt]==1.7.4
+python-jose==3.3.0
 
 # --- Machine Learning e Manipulação de Dados ---
 pandas==2.3.0
@@ -24,7 +25,7 @@ joblib==1.5.1
 
 # --- Modelagem e Treinamento ---
 lightgbm==4.6.0
-xgboost==2.1.4
+xgboost-cpu
 shap==0.48.0
 
 # --- Otimização de Hiperparâmetros ---
