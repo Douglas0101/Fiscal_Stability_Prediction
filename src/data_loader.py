@@ -1,26 +1,26 @@
-# src/data_loader.py
-
 import pandas as pd
+import logging
+from src.config import settings  # CORREÇÃO: Importa o objeto 'settings'
 
+logger = logging.getLogger(__name__)
 
-def load_data(file_path: str) -> pd.DataFrame:
+# CORREÇÃO: O argumento padrão agora usa o objeto 'settings'.
+def load_data(file_path: str = settings.RAW_DATA_PATH) -> pd.DataFrame:
     """
-    Carrega dados de um arquivo CSV.
+    Carrega os dados de um arquivo CSV.
 
     Args:
-        file_path (str): O caminho para o arquivo CSV.
+        file_path (str): O caminho para o arquivo CSV. O padrão é o caminho dos dados brutos.
 
     Returns:
         pd.DataFrame: O DataFrame carregado.
     """
     try:
-        # Adicionado sep=',' para garantir a leitura correta de arquivos CSV padrão.
-        df = pd.read_csv(file_path, sep=',')
-        print(f"Dados carregados com sucesso de: {file_path}")
-        return df
+        logger.info(f"Carregando dados de: {file_path}")
+        return pd.read_csv(file_path)
     except FileNotFoundError:
-        print(f"Erro: O arquivo não foi encontrado no caminho: {file_path}")
+        logger.error(f"Arquivo não encontrado em: {file_path}")
         raise
     except Exception as e:
-        print(f"Ocorreu um erro ao carregar o arquivo: {e}")
+        logger.error(f"Ocorreu um erro inesperado ao carregar os dados: {e}")
         raise

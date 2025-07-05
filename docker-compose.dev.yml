@@ -1,65 +1,59 @@
 # ==============================================================================
-# AMBIENTE DE DESENVOLVIMENTO COM DOCKER COMPOSE
-# ------------------------------------------------------------------------------
-# Este ficheiro define os serviços necessários para o ambiente de
-# desenvolvimento, incluindo o backend da API, o banco de dados
-# e o servidor de tracking do MLflow.
+# AMBIENTE DE DESENVOLVIMENTO COM DOCKER COMPOSE (OTIMIZADO)
 # ==============================================================================
-
-version: '3.8'
-
 services:
   # --- Serviço do Backend (API) ---
   backend:
     build:
       context: .
-      dockerfile: Dockerfile # Assumindo que o seu Dockerfile está na raiz
+      dockerfile: Dockerfile  # Usa o Dockerfile principal
     command: uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - .:/app
     ports:
       - "8000:8000"
     env_file:
-      - ./.env # Carrega as variáveis de ambiente do ficheiro .env
+      - ./.env
     depends_on:
-      - db      # Garante que o banco de dados inicie antes do backend
-      - mlflow  # Garante que o servidor MLflow inicie antes
+      db:
+        condition: service_healthy # CORREÇÃO: O backend só precisa esperar pelo DB
 
   # --- Serviço do Banco de Dados (PostgreSQL) ---
-  # Esta é a seção que foi restaurada.
   db:
     image: postgres:14-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=fiscaldb
+    env_file:
+      - ./.env
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d fiscaldb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   # --- Serviço do MLflow Tracking Server ---
   mlflow:
-    image: python:3.9-slim
-    command: >
-      sh -c "pip install mlflow psycopg2-binary boto3 &&
-             mlflow server --host 0.0.0.0 --port 5000
-             --backend-store-uri postgresql://user:password@db:5432/fiscaldb
-             --default-artifact-root ./artifacts"
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow # CORREÇÃO: Usa o novo Dockerfile dedicado
+    command: > # CORREÇÃO: O comando não precisa mais do 'pip install'
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri $$DATABASE_URL
+      --default-artifact-root /mlflow_artifacts
+    volumes:
+      - mlflow_data:/mlflow_artifacts # Persiste os artefatos
     ports:
       - "5000:5000"
-    volumes:
-      - mlflow_data:/app/artifacts
+    env_file:
+      - ./.env
     depends_on:
       db:
-        condition: service_healthy # Espera o banco de dados estar pronto
+        condition: service_healthy
 
 volumes:
   postgres_data:
   mlflow_data:
-

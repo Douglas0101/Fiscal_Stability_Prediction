@@ -1,46 +1,64 @@
-# =======================================================
-# DOCKERFILE PARA O SERVIÇO DE BACKEND (PYTHON) - FINAL
-# Local: Raiz do projeto (./Dockerfile)
-# =======================================================
+# ==============================================================================
+# DOCKERFILE OTIMIZADO - CPU-ONLY & MULTI-STAGE BUILD
+# ------------------------------------------------------------------------------
+# Esta versão força a instalação de uma versão do PyTorch exclusiva para CPU,
+# reduzindo drasticamente o tempo de build e o tamanho da imagem final.
+# ==============================================================================
 
-# --- ESTÁGIO 1: Instalação de Dependências ---
-FROM python:3.9-slim-buster AS python-deps
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential curl
-WORKDIR /usr/src/app
+# --- ESTÁGIO 1: Builder ---
+# Este estágio instala as dependências em um ambiente temporário.
+FROM python:3.9-slim-buster AS builder
+
+# Define o diretório de trabalho
+WORKDIR /opt/venv
+
+# Instala dependências do sistema
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential
+
+# Cria e ativa um ambiente virtual
+RUN python -m venv .
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Atualiza o pip
+RUN pip install --upgrade pip
+
+# --- OTIMIZAÇÃO DE VELOCIDADE ---
+# Instala o PyTorch (CPU-only) separadamente. Esta é a etapa mais demorada.
+# Ao isolá-la, garantimos que ela só será executada se a versão do torch mudar.
+RUN pip install torch==2.3.0 --index-url https://download.pytorch.org/whl/cpu
+
+# Copia e instala o resto das dependências.
+# Esta camada será cacheada enquanto o requirements.txt não for alterado.
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip wheel --retries 5 --timeout 300 --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
+RUN pip install -r requirements.txt
 
-# --- ESTÁGIO 2: Aplicação Final ---
-FROM python:3.9-slim-buster
+
+# --- ESTÁGIO 2: Final ---
+# Este estágio cria a imagem final, copiando apenas o necessário.
+FROM python:3.9-slim-buster AS final
+
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
+# Cria um usuário não-root para segurança
 RUN addgroup --system app && adduser --system --group app
-COPY --from=python-deps /usr/src/app/wheels /wheels
-COPY --from=python-deps /usr/src/app/requirements.txt .
-RUN pip install --no-cache /wheels/*
 
-# Copia todo o código-fonte da aplicação para o diretório de trabalho.
-COPY . .
+# Copia o ambiente virtual com TODAS as dependências já instaladas
+COPY --from=builder /opt/venv /opt/venv
 
-# --- CORREÇÃO DEFINITIVA ---
-# Copia a pasta 'models' (que está na raiz do projeto) para o local
-# onde a API espera encontrá-la dentro do contêiner (/app/src/models).
-COPY models /app/src/models
+# Copia o código-fonte da aplicação
+COPY ./src ./src
+COPY ./data ./data
+COPY ./models ./models
 
-# Define o usuário 'app' como proprietário de todos os arquivos, incluindo os modelos.
+# Define as permissões
 RUN chown -R app:app /app
-
-# Muda para o usuário não-root para maior segurança.
 USER app
 
-# Expõe a porta em que a API irá rodar.
+# Define o path para o ambiente virtual
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Expõe a porta
 EXPOSE 8000
 
-# Verificação de saúde: Garante que a API está operacional.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8000/docs || exit 1
-
-# Comando de inicialização definitivo para a API.
+# Comando para iniciar a aplicação
 CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000"]

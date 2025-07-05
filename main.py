@@ -1,80 +1,80 @@
-# ==============================================================================
-# ORQUESTRADOR DO PIPELINE DE PREVISÃO DE ESTABILIDADE FISCAL
-# ------------------------------------------------------------------------------
-# Versão com carregamento explícito de variáveis de ambiente para robustez.
-# ==============================================================================
-
-import argparse
-import logging
+import sys
 import os
-from dotenv import load_dotenv
+import logging
+import argparse
 
-# --- CARREGAMENTO EXPLÍCITO DAS VARIÁVEIS DE AMBIENTE ---
-# Esta é a correção crucial. `load_dotenv()` procura por um ficheiro .env
-# na raiz do projeto e o carrega no ambiente ANTES de qualquer outra coisa.
-# Isto garante que as configurações estarão disponíveis quando `src.config` for importado.
-env_path = os.path.join(os.path.dirname(__file__), '.env')
-load_dotenv(dotenv_path=env_path)
-# ---------------------------------------------------------
+# Adiciona a pasta raiz do projeto ao caminho de busca do Python
+project_root = os.path.dirname(os.path.abspath(__file__))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-# Agora que o ambiente está preparado, podemos importar nossos módulos com segurança.
-from src.config import settings
 from src.logger_config import setup_logging
 from src.data_processing import process_data
 from src.train import train_model
+from src.create_target import generate_target_variable
+from src.config import settings
 
-# Configura o logging no início da execução
 setup_logging()
 logger = logging.getLogger(__name__)
 
-
-def main():
-    """
-    Função principal que analisa os argumentos da linha de comando e
-    executa a ação correspondente.
-    """
-    parser = argparse.ArgumentParser(
-        description="Orquestrador do Pipeline de Previsão de Estabilidade Fiscal."
-    )
-
-    subparsers = parser.add_subparsers(dest="command", required=True, help="Comandos disponíveis")
-
-    parser_process = subparsers.add_parser("process-data", help="Executa o pipeline de pré-processamento de dados.")
-    parser_process.set_defaults(func=run_data_processing)
-
-    parser_train = subparsers.add_parser("train-model", help="Executa o pipeline de treinamento do modelo.")
-    parser_train.set_defaults(func=run_model_training)
-
-    args = parser.parse_args()
-    args.func(args)
-
-
-def run_data_processing(args):
-    """Executa a etapa de processamento de dados."""
-    logger.info("=" * 50)
-    logger.info("INICIANDO O PIPELINE DE PROCESSAMENTO DE DADOS")
-    logger.info("=" * 50)
+def run_target_creation():
+    logger.info("==================================================")
+    logger.info("INICIANDO O PIPELINE DE CRIAÇÃO DA VARIÁVEL ALVO")
+    logger.info("==================================================")
     try:
-        input_path = os.path.join(settings.paths.RAW_DATA_PATH, "world_bank_data_2025.csv")
-        output_path = os.path.join(settings.paths.PROCESSED_DATA_PATH, "processed_data.csv")
-        process_data(input_path=input_path, output_path=output_path)
+        generate_target_variable(
+            input_path=settings.RAW_DATA_PATH,
+            output_path=settings.RAW_DATA_WITH_TARGET_PATH
+        )
+        logger.info("Pipeline de criação da variável alvo concluído com sucesso.")
+    except Exception as e:
+        logger.error(f"Falha no pipeline de criação da variável alvo: {e}", exc_info=True)
+
+def run_data_processing():
+    logger.info("==================================================")
+    logger.info("INICIANDO O PIPELINE DE PROCESSAMENTO DE DADOS")
+    logger.info("==================================================")
+    try:
+        process_data(
+            input_path=settings.RAW_DATA_WITH_TARGET_PATH,
+            output_path=settings.PROCESSED_DATA_PATH
+        )
         logger.info("Pipeline de processamento de dados concluído com sucesso.")
     except Exception as e:
         logger.error(f"Falha no pipeline de processamento de dados: {e}", exc_info=True)
 
-
-def run_model_training(args):
-    """Executa a etapa de treinamento do modelo."""
-    logger.info("=" * 50)
-    logger.info("INICIANDO O PIPELINE DE TREINAMENTO DO MODELO")
-    logger.info("=" * 50)
+def run_model_training(model_choice: str):
+    logger.info("==================================================")
+    logger.info(f"INICIANDO O PIPELINE DE TREINAMENTO PARA O MODELO: {model_choice.upper()}")
+    logger.info("==================================================")
     try:
-        input_path = os.path.join(settings.paths.PROCESSED_DATA_PATH, "processed_data.csv")
-        train_model(data_path=input_path)
-        logger.info("Pipeline de treinamento do modelo concluído com sucesso.")
+        train_model(data_path=settings.PROCESSED_DATA_PATH, model_choice=model_choice)
+        logger.info(f"Pipeline de treinamento do modelo {model_choice.upper()} concluído com sucesso.")
     except Exception as e:
         logger.error(f"Falha no pipeline de treinamento do modelo: {e}", exc_info=True)
 
+def main():
+    parser = argparse.ArgumentParser(description="Pipeline de Machine Learning para Estabilidade Fiscal.")
+    subparsers = parser.add_subparsers(dest='command', required=True, help='Comandos disponíveis')
 
-if __name__ == "__main__":
+    parser_create_target = subparsers.add_parser('create-target', help='Cria a variável alvo nos dados brutos.')
+    parser_create_target.set_defaults(func=lambda args: run_target_creation())
+
+    parser_process = subparsers.add_parser('process-data', help='Executa o pipeline de processamento de dados.')
+    parser_process.set_defaults(func=lambda args: run_data_processing())
+
+    parser_train = subparsers.add_parser('train-model', help='Executa o pipeline de treinamento do modelo.')
+    parser_train.add_argument(
+        '--model',
+        type=str,
+        default='rf',
+        choices=['rf', 'lgbm', 'xgb', 'pytorch'],
+        help='Selecione o modelo para treinar: rf, lgbm, xgb, pytorch'
+    )
+    parser_train.set_defaults(func=lambda args: run_model_training(args.model))
+
+    args = parser.parse_args()
+    args.func(args)
+
+if __name__ == '__main__':
     main()
