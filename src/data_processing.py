@@ -1,108 +1,73 @@
-# ==============================================================================
-# PIPELINE DE PROCESSAMENTO DE DADOS (VERSÃO ROBUSTA)
-# ------------------------------------------------------------------------------
-# Este script contém uma lógica de pré-processamento robusta que:
-# 1. Separa colunas de ID, Alvo e Features.
-# 2. Verifica se a coluna Alvo existe antes de tentar usá-la.
-# 3. Processa apenas as colunas de features.
-# 4. Reconstrói o dataframe final de forma segura.
-# ==============================================================================
-
-import logging
-from typing import List
-
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
-
-# Usa imports relativos para referenciar módulos no mesmo pacote (src)
-from .config import settings
+import logging
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from src.config import settings
 
 logger = logging.getLogger(__name__)
 
 
-class DataProcessor:
+def process_data(input_path: str, output_path: str):
     """
-    Encapsula as etapas de pré-processamento APENAS para as colunas de features.
-    - Aplica StandardScaler em features numéricas.
-    - Aplica One-Hot Encoding em features categóricas.
-    """
-
-    def __init__(self, numeric_features: List[str], categorical_features: List[str]):
-        if not numeric_features:
-            logger.warning("Nenhuma feature numérica foi fornecida para escalonamento.")
-        self.numeric_features = numeric_features
-        self.categorical_features = categorical_features
-        self.scaler = StandardScaler()
-
-    def fit_transform(self, df_features: pd.DataFrame) -> pd.DataFrame:
-        """
-        Ajusta o processador às features e as transforma.
-        Assume que o DataFrame de entrada contém APENAS as features a serem processadas.
-        """
-        logger.info("Iniciando o processo de fit e transform das features.")
-        df_processed = df_features.copy()
-
-        if self.categorical_features:
-            logger.info(f"Aplicando one-hot encoding em: {self.categorical_features}")
-            df_processed = pd.get_dummies(df_processed, columns=self.categorical_features, drop_first=True, dtype=int)
-
-        # Identifica as colunas numéricas que ainda existem (e não foram transformadas em dummies)
-        current_numeric_features = [col for col in self.numeric_features if col in df_processed.columns]
-
-        if current_numeric_features:
-            logger.info(f"Aplicando StandardScaler em: {current_numeric_features}")
-            df_processed[current_numeric_features] = self.scaler.fit_transform(df_processed[current_numeric_features])
-
-        logger.info("Processamento de features concluído.")
-        return df_processed
-
-
-def process_data(input_path: str, output_path: str) -> None:
-    """
-    Orquestra o pipeline completo de processamento de dados, separando
-    features, IDs e alvo, processando apenas as features.
+    Carrega os dados, aplica pré-processamento (one-hot, scaling) e salva o resultado.
     """
     try:
         logger.info(f"Carregando dados de {input_path}")
-        raw_df = pd.read_csv(input_path)
+        df = pd.read_csv(input_path)
 
-        # --- 1. Separação de Colunas ---
-        id_cols_config = [settings.model.ENTITY_COLUMN, settings.model.YEAR_COLUMN]
-
-        # Guarda as colunas que não serão processadas (IDs e Alvo)
-        cols_to_keep = []
-        for col in id_cols_config:
-            if col in raw_df.columns:
-                cols_to_keep.append(col)
-
-        if settings.model.TARGET_COLUMN in raw_df.columns:
-            logger.info(f"Coluna alvo '{settings.model.TARGET_COLUMN}' encontrada.")
-            cols_to_keep.append(settings.model.TARGET_COLUMN)
+        target_col = settings.model.TARGET_VARIABLE
+        if target_col in df.columns:
+            y = df[[target_col]]
+            df = df.drop(columns=[target_col])
         else:
-            logger.warning(
-                f"Coluna alvo '{settings.model.TARGET_COLUMN}' não encontrada. O script continuará, assumindo que é um dataset para predição.")
+            y = None
 
-        non_feature_df = raw_df[cols_to_keep]
-        features_df = raw_df.drop(columns=cols_to_keep, errors='ignore')
+        # --- CORREÇÃO DE VAZAMENTO ---
+        # Remove as colunas que foram usadas para criar o alvo
+        leaky_features = settings.model.LEAKY_FEATURES
+        existing_leaky_features = [col for col in leaky_features if col in df.columns]
+        if existing_leaky_features:
+            df = df.drop(columns=existing_leaky_features)
+            logger.info(f"Colunas de vazamento removidas para evitar 'colar': {existing_leaky_features}")
+        # ---------------------------
 
-        # --- 2. Processamento das Features ---
-        numeric_features = features_df.select_dtypes(include=['float64', 'int64']).columns.tolist()
-        categorical_features = features_df.select_dtypes(include=['object', 'category']).columns.tolist()
+        cols_to_drop = settings.model.DROP_COLUMNS
+        existing_cols_to_drop = [col for col in cols_to_drop if col in df.columns]
+        if existing_cols_to_drop:
+            df = df.drop(columns=existing_cols_to_drop)
+            logger.info(f"Colunas desnecessárias removidas: {existing_cols_to_drop}")
 
-        processor = DataProcessor(numeric_features=numeric_features, categorical_features=categorical_features)
+        categorical_features = [col for col in settings.model.CATEGORICAL_FEATURES if col in df.columns]
+        numerical_features = [col for col in df.columns if col not in categorical_features]
 
-        processed_features_df = processor.fit_transform(features_df)
+        logger.info(f"Features Categóricas para One-Hot Encoding: {categorical_features}")
+        logger.info(f"Features Numéricas para Scaling: {numerical_features}")
 
-        # --- 3. Reconstrução do DataFrame Final ---
-        final_df = pd.concat([non_feature_df.reset_index(drop=True), processed_features_df.reset_index(drop=True)],
-                             axis=1)
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', StandardScaler(), numerical_features),
+                ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), categorical_features)
+            ],
+            remainder='drop'
+        )
+
+        logger.info("Iniciando o processo de fit e transform das features.")
+        processed_features = preprocessor.fit_transform(df)
+
+        new_cat_features = preprocessor.named_transformers_['cat'].get_feature_names_out(categorical_features)
+        processed_cols = numerical_features + list(new_cat_features)
+
+        df_processed = pd.DataFrame(processed_features, columns=processed_cols, index=df.index)
+        logger.info("Processamento de features concluído.")
+
+        if y is not None:
+            df_final = pd.concat([y.reset_index(drop=True), df_processed.reset_index(drop=True)], axis=1)
+        else:
+            df_final = df_processed
 
         logger.info(f"Salvando dados processados em {output_path}")
-        final_df.to_csv(output_path, index=False)
+        df_final.to_csv(output_path, index=False)
 
-    except FileNotFoundError:
-        logger.error(f"Arquivo não encontrado em {input_path}", exc_info=True)
-        raise
     except Exception as e:
-        logger.error(f"Um erro ocorreu durante o processamento dos dados: {e}", exc_info=True)
+        logger.error(f"Um erro inesperado ocorreu durante o processamento dos dados: {e}", exc_info=True)
         raise

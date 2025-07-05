@@ -1,78 +1,61 @@
-# ==============================================================================
-# CONFIGURAÇÃO CENTRALIZADA DO PROJETO
-# ------------------------------------------------------------------------------
-# Este ficheiro utiliza Pydantic para carregar, validar e centralizar todas
-# as configurações da aplicação, desde caminhos de ficheiros até
-# hiperparâmetros de modelos.
-# ==============================================================================
-
 import os
-from functools import lru_cache
-from typing import Dict, Any
-
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
-
-# --- VERIFICAÇÃO DE SANIDADE ---
-if "SECRET_KEY" not in os.environ:
-    raise EnvironmentError(
-        "ERRO CRÍTICO: Variáveis de ambiente não foram carregadas.\n"
-        "Certifique-se de que o ficheiro '.env' existe na raiz do projeto e que\n"
-        "o ponto de entrada da aplicação (main.py) está a usar `load_dotenv()`."
-    )
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from typing import List, Dict, Any
 
 
-class ApiSettings(BaseSettings):
-    """Configurações relacionadas com a API e segurança."""
-    SECRET_KEY: str
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+# Sub-classe para configurações específicas do modelo
+class ModelConfig(BaseModel):
+    """Configurações relacionadas ao modelo e às features."""
+    TARGET_VARIABLE: str = 'fiscal_stability_index'
+    ENTITY_COLUMN: str = 'country_id'
+    YEAR_COLUMN: str = 'year'
+    DROP_COLUMNS: List[str] = ['country_name']
 
+    LEAKY_FEATURES: List[str] = ['Public Debt (% of GDP)', 'Government Revenue (% of GDP)']
 
-class PathSettings(BaseSettings):
-    """Configurações de caminhos para dados, modelos e relatórios."""
-    RAW_DATA_PATH: str = os.path.join(BASE_DIR, 'data', '01_raw')
-    PROCESSED_DATA_PATH: str = os.path.join(BASE_DIR, 'data', '02_processed')
-    MODELS_PATH: str = os.path.join(BASE_DIR, 'models')
-    REPORTS_PATH: str = os.path.join(BASE_DIR, 'reports')
+    CATEGORICAL_FEATURES: List[str] = ['country_id']
 
-
-class ModelParams(BaseSettings):
-    """Parâmetros para o treinamento e avaliação do modelo."""
-    SPLIT_YEAR: int = 2018
-    # CORREÇÃO: Alterado de "Year" para "year" para corresponder aos dados reais.
-    YEAR_COLUMN: str = "year"
-    ENTITY_COLUMN: str = "Country Name"
-    TARGET_COLUMN: str = "fiscal_stability_index"
-
-    LGBM_PARAMS: Dict[str, Any] = {
-        'objective': 'binary', 'metric': 'auc', 'n_estimators': 1000,
-        'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': -1,
-        'random_state': 42, 'n_jobs': -1, 'colsample_bytree': 0.8, 'subsample': 0.8,
+    MODEL_PARAMS: Dict[str, Dict[str, Any]] = {
+        'rf': {
+            "random_state": 42, "n_jobs": -1, "n_estimators": 100, "class_weight": "balanced"
+        },
+        'lgbm': {
+            "random_state": 42, "n_jobs": -1, "n_estimators": 100, "scale_pos_weight": 8.5
+        },
+        'xgb': {
+            "random_state": 42, "n_jobs": -1, "n_estimators": 100, "eval_metric": "logloss", "scale_pos_weight": 8.5
+        },
+        'pytorch': {
+            "hidden_size_1": 256,  # Aumentada a primeira camada
+            "hidden_size_2": 128,  # Nova camada
+            "learning_rate": 0.001,
+            "epochs": 50,  # Aumentado o número de épocas
+            "batch_size": 64,
+            "weight_decay": 0.01,  # Parâmetro para o otimizador AdamW
+            "dropout_rate": 0.4  # Aumentado o dropout para a rede maior
+        }
     }
 
 
 class Settings(BaseSettings):
-    """Classe principal que agrega todas as configurações da aplicação."""
-    APP_NAME: str = "Fiscal Stability Prediction API"
+    """
+    Configurações centralizadas do projeto.
+    """
     DEBUG: bool = False
-    DATABASE_URL: str
-    MLFLOW_TRACKING_URI: str
-    MLFLOW_EXPERIMENT_NAME: str = "fiscal_stability_prediction"
+    BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    RAW_DATA_PATH: str = os.path.join(BASE_DIR, 'data/01_raw/world_bank_data_2025.csv')
+    RAW_DATA_WITH_TARGET_PATH: str = os.path.join(BASE_DIR, 'data/01_raw/world_bank_data_with_target.csv')
+    PROCESSED_DATA_PATH: str = os.path.join(BASE_DIR, 'data/02_processed/processed_data.csv')
+    MODEL_PATH: str = os.path.join(BASE_DIR, 'models/')
+    REPORTS_PATH: str = os.path.join(BASE_DIR, 'reports/')
+    LOG_FILE_PATH: str = os.path.join(BASE_DIR, 'app.log')
+    TEST_SIZE: float = 0.2
+    RANDOM_STATE: int = 42
+    model: ModelConfig = ModelConfig()
 
-    api: ApiSettings = ApiSettings()
-    paths: PathSettings = PathSettings()
-    model: ModelParams = ModelParams()
-
-
-@lru_cache()
-def get_settings() -> Settings:
-    """Retorna uma instância singleton da classe de configurações."""
-    settings_obj = Settings()
-    os.makedirs(settings_obj.paths.MODELS_PATH, exist_ok=True)
-    os.makedirs(settings_obj.paths.REPORTS_PATH, exist_ok=True)
-    return settings_obj
+    class Config:
+        case_sensitive = True
 
 
-settings = get_settings()
+settings = Settings()
