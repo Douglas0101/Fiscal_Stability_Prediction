@@ -1,64 +1,72 @@
-# =======================================================
-# ARQUIVO DE ORQUESTRAÇÃO PARA PRODUÇÃO
-# Local: Raiz do projeto (./docker-compose.yml)
-# =======================================================
-
-networks:
-  fiscal_net:
-    driver: bridge
-
 services:
   db:
-    image: postgres:14
-    env_file:
-      - .env
+    image: postgres:13-alpine
+    container_name: fiscal_db
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=fisc_user
+      - POSTGRES_PASSWORD=fisc_password
+      - POSTGRES_DB=fiscal_stability_db
     restart: unless-stopped
-    networks:
-      - fiscal_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
+      # Verifica se o servidor PostgreSQL está pronto para aceitar conexões
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
-  backend:
+  mlflow:
+    container_name: fiscal_mlflow
     build:
       context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/fiscaldb
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - fiscal_net
-
-  mlflow:
-    image: python:3.9-slim-buster
+      dockerfile: Dockerfile.mlflow
     ports:
       - "5000:5000"
     environment:
-      - MLFLOW_TRACKING_URI=postgresql://user:password@db:5432/fiscaldb
-      - MLFLOW_ARTIFACT_LOCATION=/mlflow_artifacts
+      - MLFLOW_BACKEND_STORE_URI=postgresql://fisc_user:fisc_password@db:5432/fiscal_stability_db
+      # --- A CORREÇÃO FINAL E DEFINITIVA ---
+      # Remover 'file:///' faz com que o servidor gerencie o armazenamento de artefatos,
+      # atuando como um proxy e eliminando conflitos de permissão do cliente.
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlruns
     volumes:
-      - mlflow_artifacts:/mlflow_artifacts
+      - ./mlruns:/mlruns
+    user: "${UID}:${GID}"
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - fiscal_net
-    command: >
-      bash -c "pip install mlflow psycopg2-binary && mlflow server \
-      --host 0.0.0.0 --port 5000 \
-      --backend-store-uri postgresql://user:password@db:5432/fiscaldb \
-      --default-artifact-root /mlflow_artifacts"
+
+  api:
+    container_name: fiscal_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Passa os IDs do host para o Dockerfile para o build da imagem
+      args:
+        UID: ${UID}
+        GID: ${GID}
+    volumes:
+      - ./src:/app/src
+      # Mapeia os dados para dentro do contêiner para que o train.py os encontre
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://fisc_user:fisc_password@db:5432/fiscal_stability_db
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - API_MODEL_NAME=fiscal-stability-xgb
+      - SECRET_KEY=sua_chave_secreta_super_dificil_de_adivinhar_aqui
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+    restart: unless-stopped
+    depends_on:
+      db:
+        # Espera o contêiner 'db' estar saudável
+        condition: service_healthy
+      mlflow:
+        # Espera o contêiner 'mlflow' apenas iniciar
+        condition: service_started
 
 volumes:
   postgres_data:
-  mlflow_artifacts: {}

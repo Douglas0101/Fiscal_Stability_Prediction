@@ -1,92 +1,44 @@
-# Arquivo .gitignore Otimizado para Projetos de MLOps com DVC
+# Arquivo .gitignore Otimizado
 
-# 1. Ambientes Virtuais e Dependências
-# Ignora ambientes virtuais para garantir que o projeto seja portável.
-# As dependências devem ser gerenciadas por um arquivo requirements.txt.
-.env
-.venv
-env/
+### Ambientes Virtuais e Dependências Locais ###
 venv/
-ENV/
-env.bak/
-venv.bak/
+env/
+.venv/
+.env
+/node_modules/
 
-# 2. Caches e Arquivos Gerados pelo Python
-# Ignora arquivos de cache e bytecode para manter o repositório limpo.
+### Arquivos Gerados pelo Python ###
 __pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
-.mypy_cache/
-.hypothesis/
-.tox/
-.nox/
+*.pyc
+*.pyo
+*.pyd
 
-# 3. Configurações de IDEs e Editores
-# Ignora arquivos específicos do ambiente de desenvolvimento de cada colaborador.
+### Logs ###
+*.log
+app.log*
+
+### Dados ###
+# Dados nunca devem ser versionados. Use DVC ou armazene na nuvem.
+data/
+
+### Rastreamento de Experimentos (MLflow) ###
+# O diretório mlruns é gerado localmente e não deve ser versionado.
+# O banco de dados do MLflow (se for sqlite) também é ignorado.
+mlruns/
+mlflow.db
+
+### Relatórios e Figuras Geradas ###
+reports/
+*.png
+*.json
+*.md
+
+### Arquivos de IDE e Sistema Operacional ###
 .idea/
 .vscode/
 *.swp
-*.swo
-*~
-
-# 4. Arquivos de Sistema Operacional
-# Ignora metadados de sistema operacional.
 .DS_Store
-Thumbs.db
 
-# 5. Arquivos de Build e Distribuição
-# Ignora artefatos de build de pacotes Python.
-build/
-dist/
-eggs/
-*.egg-info/
-*.egg
-
-# 6. Ferramentas de ML e Dados (DVC e MLflow)
-# -----------------------------------------------------------------------------
-# CRÍTICO: Ignora o cache do DVC e os logs do MLflow.
-# Os metadados (.dvc files) SÃO versionados, mas o cache de dados não.
-# -----------------------------------------------------------------------------
-.dvc/cache
-mlruns/
-
-# 7. Dados, Modelos e Relatórios (ESTRUTURA vs. CONTEÚDO)
-# -----------------------------------------------------------------------------
-# REPARO PRINCIPAL: Ignora o CONTEÚDO das pastas, mas não as pastas em si.
-# Isso permite que a estrutura de diretórios do projeto seja visível no GitHub,
-# o que é excelente para demonstrar suas habilidades de organização.
-#
-# Crie um arquivo vazio chamado .gitkeep em cada uma destas pastas
-# (ex: data/01_raw/.gitkeep) para garantir que o Git as rastreie.
-# -----------------------------------------------------------------------------
-data/01_raw/*
-!data/01_raw/.gitkeep
-
-data/02_processed/*
-!data/02_processed/.gitkeep
-
-data/03_final/*
-!data/03_final/.gitkeep
-
-data/04_features/*
-!data/04_features/.gitkeep
-
-models/*
-!models/.gitkeep
-
-reports/*
-!reports/.gitkeep
-
-# 8. Arquivos de Notebooks
-# -----------------------------------------------------------------------------
-# Ignora checkpoints de notebooks, mas MANTÉM os notebooks.
-# Notebooks são importantes para demonstração e exploração.
-# -----------------------------------------------------------------------------
-.ipynb_checkpoints/
-
-# 9. Arquivos Temporários e Logs
-# Ignora arquivos de log e outros arquivos temporários.
-*.log
-temp_execution.py
-
+### Diretórios incomuns ou de teste ###
+argparse/
+logging/

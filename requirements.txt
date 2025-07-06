@@ -1,39 +1,36 @@
-#==============================================================================
-#DEPENDÊNCIAS DO PROJETO COM VERSÕES FIXADAS
-#------------------------------------------------------------------------------
-#O PyTorch foi removido deste arquivo e é instalado diretamente no Dockerfile
-#para forçar o uso da versão CPU-only, que é muito mais leve e rápida.
-#==============================================================================
-#--- Framework da API e Servidor ---
+# requirements.txt
 
-fastapi==0.111.0
-uvicorn[standard]==0.29.0
-python-multipart==0.0.9
-#--- Banco de Dados e ORM ---
+# --- Core e Manipulação de Dados ---
+pandas
+scikit-learn
 
-SQLAlchemy==2.0.30
-psycopg2-binary==2.9.9
-#--- Validação de Dados e Configurações ---
+# --- Modelos de Machine Learning ---
+torch
+xgboost
+lightgbm
 
-pydantic==2.7.1
-pydantic-settings==2.2.1
-#--- Autenticação e Segurança ---
+# --- MLOps & Interpretabilidade ---
+mlflow
+shap
 
-passlib[bcrypt]==1.7.4
-python-jose[cryptography]==3.3.0
-#--- Machine Learning e Análise de Dados ---
+# --- API Framework ---
+fastapi
+uvicorn[standard]
 
-pandas==2.2.2
-scikit-learn==1.4.2
-numpy==1.26.4
-joblib==1.4.2
-xgboost==2.0.3
-lightgbm==4.3.0
-#torch é instalado no Dockerfile
+# --- Validação de Dados e Schemas ---
+pydantic
 
-shap==0.45.1
-matplotlib==3.8.4
-#--- MLOps e Tracking ---
+# --- Banco de Dados ---
+SQLAlchemy
+psycopg2-binary
 
-mlflow==2.13.2
-boto3==1.34.108
+# --- Autenticação & Segurança ---
+python-multipart
+passlib[bcrypt]
+python-jose[cryptography]
+
+# --- Dependências Auxiliares ---
+# matplotlib (usado pelo SHAP para plots)
+matplotlib
+# joblib (usado para serialização de modelos sklearn)
+joblib

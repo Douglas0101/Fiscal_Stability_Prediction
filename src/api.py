@@ -3,16 +3,15 @@ import pandas as pd
 import shap
 import logging
 import mlflow
-import re
 import joblib
+import json
 from fastapi import FastAPI, HTTPException, Depends, Request
-from pydantic import BaseModel
-from typing import Dict, Any, List
+from typing import Any, List
 from contextlib import asynccontextmanager
 from sqlalchemy.orm import Session
 
 # Importações relativas que funcionarão dentro do Docker
-from . import models, schemas, auth
+from . import models, schemas, auth, crud
 from .database import engine, get_db
 
 # --- Configuração ---
@@ -56,33 +55,29 @@ async def lifespan(app: FastAPI):
 
         logging.info(f"Carregando modelo da URI: {model_uri} (Run ID: {run_id})")
 
-        # Carrega o modelo sklearn
-        model_path = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="model")
-        unwrapped_model = joblib.load(os.path.join(model_path, "model.pkl"))
+        model_path = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="model/model.pkl")
+        unwrapped_model = joblib.load(model_path)
 
-        # Carrega o scaler associado
         scaler_path = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="preprocessor/scaler.joblib")
         scaler = joblib.load(scaler_path)
 
-        logging.info("Modelo e scaler carregados com sucesso.")
+        features_path = mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path="features/feature_names.json")
+        with open(features_path, 'r') as f:
+            feature_names = json.load(f)
+        logging.info("Nomes das features carregados do artefato do MLflow.")
 
-        # Cria o explainer e prepara os nomes das features
         explainer = shap.TreeExplainer(unwrapped_model)
-        feature_names_raw = list(schemas.PredictionFeatures.model_fields.keys())
-        feature_names_sanitized = [re.sub(r'[^A-Za-z0-9_]+', '_', col) for col in feature_names_raw]
 
         model_handler = MLModelHandler(
             model=unwrapped_model,
             scaler=scaler,
             explainer=explainer,
-            feature_names=feature_names_sanitized
+            feature_names=feature_names
         )
         logging.info("Handler de ML pronto para uso.")
 
     except Exception as e:
-        logging.error(
-            f"Erro crítico ao carregar modelo ou artefatos do MLflow: {e}. A API iniciará sem um modelo funcional.",
-            exc_info=True)
+        logging.error(f"Erro crítico ao carregar modelo: {e}. A API iniciará sem um modelo funcional.", exc_info=True)
 
     app.state.ml_handler = model_handler
     yield
@@ -93,7 +88,7 @@ async def lifespan(app: FastAPI):
 # --- Criação da Aplicação FastAPI ---
 app = FastAPI(
     title="API de Previsão de Estabilidade Fiscal",
-    description="Uma API para prever a estabilidade fiscal usando um modelo de ML carregado via MLflow, com persistência e explicabilidade.",
+    description="API para prever estabilidade fiscal usando MLflow, com persistência e explicabilidade.",
     version="3.0.0",
     lifespan=lifespan
 )
@@ -107,7 +102,6 @@ def get_ml_handler(request: Request) -> MLModelHandler:
 
 
 # --- Rotas da API ---
-# Incluindo o roteador de autenticação
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 
 
@@ -119,14 +113,16 @@ async def predict(
         current_user: models.User = Depends(auth.get_current_active_user)
 ):
     try:
-        input_df = pd.DataFrame([features.model_dump()])
-        input_scaled = ml_handler.scaler.transform(input_df)
+        input_df_raw = pd.DataFrame([features.model_dump()])
+        input_df_ordered = input_df_raw[ml_handler.feature_names]
+        input_scaled = ml_handler.scaler.transform(input_df_ordered)
         input_scaled_df = pd.DataFrame(input_scaled, columns=ml_handler.feature_names)
 
         prediction = int(ml_handler.model.predict(input_scaled_df)[0])
         prediction_proba = ml_handler.model.predict_proba(input_scaled_df)[0]
 
-        shap_values = ml_handler.explainer.shap_values(input_scaled_df)[1]
+        shap_values_all = ml_handler.explainer.shap_values(input_scaled_df)
+        shap_values_for_positive_class = shap_values_all[1] if isinstance(shap_values_all, list) else shap_values_all
 
         db_prediction = crud.create_prediction(
             db=db,
@@ -142,7 +138,7 @@ async def predict(
             prediction_code=prediction,
             probability_stable=float(prediction_proba[0]),
             probability_unstable=float(prediction_proba[1]),
-            shap_values=dict(zip(ml_handler.feature_names, shap_values.tolist()))
+            shap_values=dict(zip(ml_handler.feature_names, shap_values_for_positive_class.tolist()))
         )
     except Exception as e:
         logging.error(f"Erro durante a predição: {e}", exc_info=True)

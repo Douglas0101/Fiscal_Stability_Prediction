@@ -22,10 +22,6 @@ from lightgbm import LGBMClassifier
 from xgboost import XGBClassifier
 
 
-# Supondo que estes módulos existam na sua estrutura de projeto
-# from .pytorch_models import TabularDataset, SimpleMLP
-# from .config import settings
-
 # --- Módulos de Exemplo (para o código ser executável) ---
 class TabularDataset(torch.utils.data.Dataset):
     def __init__(self, X, y):
@@ -55,13 +51,15 @@ class SimpleMLP(nn.Module):
 
 
 class Settings:
-    PROCESSED_DATA_PATH = 'processed_data.csv'  # Path de exemplo
+    PROCESSED_DATA_PATH = '/app/data/02_processed/processed_data.csv'
     REPORTS_PATH = 'reports'
     TEST_SIZE = 0.2
     RANDOM_STATE = 42
 
     class model:
-        TARGET_VARIABLE = 'target'
+        # --- CORREÇÃO FINAL: Usar o nome correto da coluna-alvo ---
+        TARGET_VARIABLE = 'fiscal_stability_index'
+
         MODEL_PARAMS = {
             'rf': {'n_estimators': 100, 'random_state': 42},
             'lgbm': {'n_estimators': 100, 'random_state': 42},
@@ -95,7 +93,6 @@ def log_classification_metrics(report_dict: dict):
     for class_or_avg, metrics in report_dict.items():
         if isinstance(metrics, dict):
             for metric, value in metrics.items():
-                # Evita logar a métrica de suporte com nome de classe numérico
                 metric_name = re.sub(r'[^A-Za-z_]+', '', class_or_avg)
                 mlflow.log_metric(f"{metric_name}_{metric}", value)
 
@@ -134,7 +131,6 @@ class SklearnTrainer(ModelTrainer):
     def __init__(self, model_class, **kwargs):
         super().__init__(**kwargs)
         self.model = model_class(**self.params)
-        # Sanitiza nomes de colunas para LGBM e XGB
         if model_class in [LGBMClassifier, XGBClassifier]:
             self.X_train.columns = [re.sub(r'[^A-Za-z0-9_]+', '_', col) for col in self.X_train.columns]
             self.X_test.columns = [re.sub(r'[^A-Za-z0-9_]+', '_', col) for col in self.X_test.columns]
@@ -149,19 +145,15 @@ class SklearnTrainer(ModelTrainer):
         return self.get_report(self.y_test, y_pred)
 
     def log_model_and_artifacts(self, registered_model_name: str, temp_dir: str):
-        # Loga o modelo usando o formato pyfunc para maior portabilidade
         mlflow.sklearn.log_model(
             sk_model=self.model,
-            artifact_path=f"model",
+            artifact_path="model",
             registered_model_name=registered_model_name
         )
 
-        # Gera e loga o gráfico de importância de features (SHAP)
         logger.info("Generating and logging SHAP feature importance plot.")
         explainer = shap.TreeExplainer(self.model)
         shap_values = explainer.shap_values(self.X_test)
-
-        # Para classificação binária, use shap_values[1] para a classe positiva
         shap_values_for_plot = shap_values[1] if isinstance(shap_values, list) else shap_values
 
         plt.figure()
@@ -185,20 +177,25 @@ class PyTorchTrainer(ModelTrainer):
         train_dataset = TabularDataset(self.X_train.values, self.y_train.values)
         train_loader = DataLoader(dataset=train_dataset, batch_size=self.params['batch_size'], shuffle=True)
 
-        criterion = nn.BCEWithLogitsLoss()
+        # --- OTIMIZAÇÃO: Calcular pos_weight para lidar com desbalanceamento de classe ---
+        count_neg = (self.y_train == 0).sum()
+        count_pos = (self.y_train == 1).sum()
+        pos_weight_value = count_neg / count_pos if count_pos > 0 else 1.0
+        pos_weight_tensor = torch.tensor([pos_weight_value], device=device)
+        logger.info(f"Using weighted loss with pos_weight: {pos_weight_value:.2f}")
+
+        criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight_tensor)
         optimizer = optim.Adam(self.model.parameters(), lr=self.params['lr'])
 
         self.model.train()
         for epoch in range(self.params['epochs']):
             for batch_X, batch_y in train_loader:
                 batch_X, batch_y = batch_X.to(device), batch_y.to(device)
-
                 optimizer.zero_grad()
                 outputs = self.model(batch_X)
                 loss = criterion(outputs, batch_y)
                 loss.backward()
                 optimizer.step()
-
             logger.info(f"Epoch [{epoch + 1}/{self.params['epochs']}], Loss: {loss.item():.4f}")
 
     def evaluate(self):
@@ -214,7 +211,6 @@ class PyTorchTrainer(ModelTrainer):
                 outputs = self.model(batch_X)
                 preds = torch.sigmoid(outputs) > 0.5
                 all_preds.extend(preds.cpu().numpy())
-
         return self.get_report(self.y_test, np.array(all_preds))
 
     def log_model_and_artifacts(self, registered_model_name: str, temp_dir: str):
@@ -223,7 +219,25 @@ class PyTorchTrainer(ModelTrainer):
             artifact_path="model",
             registered_model_name=registered_model_name
         )
-        logger.warning("SHAP plot for PyTorch models is not implemented in this script.")
+
+        # --- OTIMIZAÇÃO: Implementação do SHAP para PyTorch ---
+        logger.info("Generating and logging SHAP feature importance plot for PyTorch model.")
+        device = next(self.model.parameters()).device
+
+        # SHAP DeepExplainer espera tensores PyTorch
+        background_data = torch.tensor(self.X_train.values[:100], dtype=torch.float32).to(device)
+        test_data_tensor = torch.tensor(self.X_test.values[:100], dtype=torch.float32).to(
+            device)  # Usar um subset para performance
+
+        explainer = shap.DeepExplainer(self.model, background_data)
+        shap_values = explainer.shap_values(test_data_tensor)
+
+        plt.figure()
+        shap.summary_plot(shap_values, self.X_test.head(100), plot_type="bar", show=False, max_display=20)
+        shap_plot_path = os.path.join(temp_dir, f"feature_importance_pytorch.png")
+        plt.savefig(shap_plot_path, bbox_inches='tight')
+        plt.close()
+        mlflow.log_artifact(shap_plot_path, "feature_importance")
 
 
 def orchestrate_training(model_choice: str):
@@ -233,27 +247,16 @@ def orchestrate_training(model_choice: str):
     """
     setup_mlflow()
 
-    # Criar dados de exemplo se não existirem
-    if not os.path.exists(settings.PROCESSED_DATA_PATH):
-        logger.info("Creating dummy processed data file.")
-        n_samples, n_features = 1000, 20
-        X, y = np.random.rand(n_samples, n_features), np.random.randint(0, 2, n_samples)
-        df_dummy = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(n_features)])
-        df_dummy[settings.model.TARGET_VARIABLE] = y
-        df_dummy.to_csv(settings.PROCESSED_DATA_PATH, index=False)
-
+    # ... (código para carregar ou criar dados de exemplo)
     logger.info(f"Loading processed data from: {settings.PROCESSED_DATA_PATH}")
     df = pd.read_csv(settings.PROCESSED_DATA_PATH)
-
     target_col = settings.model.TARGET_VARIABLE
     X = df.drop(columns=[target_col])
     y = df[target_col]
-
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=settings.TEST_SIZE, random_state=settings.RANDOM_STATE, stratify=y
     )
 
-    # Pré-processamento com StandardScaler
     scaler = StandardScaler()
     X_train_scaled = pd.DataFrame(scaler.fit_transform(X_train), columns=X_train.columns)
     X_test_scaled = pd.DataFrame(scaler.transform(X_test), columns=X_test.columns)
@@ -271,39 +274,38 @@ def orchestrate_training(model_choice: str):
     with mlflow.start_run(run_name=f"train_{model_choice}") as run:
         logger.info(f"Starting MLflow run '{run.info.run_name}' for model: {model_choice}")
         mlflow.log_param("model_type", model_choice)
-
         params = settings.model.MODEL_PARAMS.get(model_choice, {})
         mlflow.log_params(params)
 
-        # Usar um diretório temporário para artefatos
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Logar o scaler
             scaler_path = os.path.join(temp_dir, "scaler.joblib")
             joblib.dump(scaler, scaler_path)
             mlflow.log_artifact(scaler_path, "preprocessor")
 
-            # Seleciona o X apropriado (scaled para pytorch, original para árvores)
             X_train_final = X_train_scaled if model_choice == 'pytorch' else X_train
             X_test_final = X_test_scaled if model_choice == 'pytorch' else X_test
 
-            # Instancia e treina o modelo
             TrainerClass, extra_args = trainers[model_choice]
             trainer_instance = TrainerClass(
                 X_train=X_train_final, y_train=y_train,
                 X_test=X_test_final, y_test=y_test,
-                params=params,
-                **extra_args
+                params=params, **extra_args
             )
-
             trainer_instance.train()
             report_dict = trainer_instance.evaluate()
             log_classification_metrics(report_dict)
 
-            # Loga modelo e artefatos específicos
+            # --- OTIMIZAÇÃO: Logar a lista de nomes de features para a API ---
+            final_feature_names = list(trainer_instance.X_train.columns)
+            features_path = os.path.join(temp_dir, "feature_names.json")
+            with open(features_path, 'w') as f:
+                json.dump(final_feature_names, f)
+            mlflow.log_artifact(features_path, "features")
+            logger.info("Feature names logged as artifact 'features/feature_names.json'.")
+
             registered_model_name = f"fiscal-stability-{model_choice}"
             trainer_instance.log_model_and_artifacts(registered_model_name, temp_dir)
 
-            # Loga o relatório de classificação
             report_json_path = os.path.join(temp_dir, "classification_report.json")
             with open(report_json_path, 'w') as f:
                 json.dump(report_dict, f, indent=4)
