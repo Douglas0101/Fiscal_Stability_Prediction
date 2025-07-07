@@ -1,9 +1,14 @@
-from sqlalchemy import Column, Integer, String
+# src/models.py
+from sqlalchemy import Column, Integer, String, Float, JSON
 from .database import Base
 
-class User(Base):
-    __tablename__ = "users"
+class Prediction(Base):
+    """
+    Modelo ORM para a tabela de previsões no banco de dados.
+    """
+    __tablename__ = "predictions"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
+    request_data = Column(JSON)
+    prediction = Column(String)
+    probability = Column(Float)

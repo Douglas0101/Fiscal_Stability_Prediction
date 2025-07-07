@@ -1,27 +1,52 @@
-# File: src/database.py
-# (Ficheiro Novo)
-# Este módulo centraliza a configuração e a gestão da sessão do banco de dados.
+# src/database.py
 
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 import os
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker, declarative_base
+from pydantic_settings import BaseSettings
 
-# Carrega a URL do banco de dados a partir de uma variável de ambiente para flexibilidade.
-# O valor padrão é para desenvolvimento local fora do Docker.
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://user:password@localhost:5432/fiscaldb")
+# --- 1. Configuração Robusta com Pydantic (Sem alterações) ---
+class DatabaseSettings(BaseSettings):
+    DATABASE_URL: str
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    class Config:
+        env_file = ".env"
+        env_file_encoding = 'utf-8'
+
+settings = DatabaseSettings()
+
+# --- 2. Engine e Sessão Assíncronos (Aprimorado) ---
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    echo=False,
+    future=True,
+    # --- APRIMORAMENTO: Configuração explícita do pool de conexões para produção ---
+    pool_size=10,  # Número de conexões a manter abertas no pool.
+    max_overflow=20,  # Conexões extras que podem ser abertas além do pool_size.
+)
+
+AsyncSessionLocal = sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
+
+# --- APRIMORAMENTO: Base declarativa para ser usada pelo Alembic para migrações ---
+# O Alembic (ferramenta de migração) usará esta 'Base' para detectar
+# mudanças nos seus modelos (como em 'models.py') e gerar os scripts de migração.
 Base = declarative_base()
 
-def get_db():
+
+# --- 3. Função de Dependência Assíncrona para FastAPI (Sem alterações) ---
+async def get_db() -> AsyncSession:
     """
-    Dependência do FastAPI que cria uma sessão do banco de dados por requisição
-    e garante que ela seja fechada ao final, mesmo em caso de erro.
+    Fornece uma sessão de base de dados assíncrona para cada request.
+    Garante que a sessão é sempre fechada corretamente.
     """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()

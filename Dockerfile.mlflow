@@ -1,19 +1,29 @@
-# Dockerfile.mlflow
-
-# A linha ARG foi removida.
+# Dockerfile.mlflow (FINAL)
 
 FROM python:3.9-slim
 
-WORKDIR /app
+# Argumentos que receberemos do docker-compose.yml
+ARG UID=1000
+ARG GID=1000
 
-RUN apt-get update && apt-get install -y git && \
-    pip install mlflow psycopg2-binary
+# --- NOVO: Instala o curl para que o healthcheck funcione ---
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# --- CORREÇÃO FINAL: Fixar (hardcode) os IDs de usuário e grupo ---
-RUN groupadd -g 1000 appgroup && \
-    useradd --no-log-init -u 1000 -g appgroup -m appuser
+# Instala as dependências Python
+RUN pip install mlflow psycopg2-binary
 
-USER appuser
+# Cria a pasta de artefatos
+RUN mkdir -p /mlflow/artifacts
 
+# Cria um grupo e um usuário com os IDs do seu usuário local
+RUN addgroup --gid ${GID} mlflow_group || true
+RUN adduser --disabled-password --no-create-home --uid ${UID} --ingroup mlflow_group mlflow_user
+
+# Dá a posse da pasta de artefatos para o novo usuário
+RUN chown -R mlflow_user:mlflow_group /mlflow
+
+# Define o usuário que rodará o processo
+USER mlflow_user
+
+# Expõe a porta
 EXPOSE 5000
-CMD ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000"]

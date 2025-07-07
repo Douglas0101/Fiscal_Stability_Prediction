@@ -1,36 +1,46 @@
-# requirements.txt
+# ==============================================================================
+# ==                      Dependências do Projeto                             ==
+# ==============================================================================
+# Use `pip install -r requirements.txt` para instalar todas as dependências.
 
 # --- Core e Manipulação de Dados ---
-pandas
-scikit-learn
+pandas              # Para manipulação e análise de dados (DataFrames)
 
 # --- Modelos de Machine Learning ---
-torch
-xgboost
-lightgbm
+scikit-learn        # Biblioteca base para ML, pré-processamento e métricas
+torch               # Framework para deep learning (modelo MLP)
+xgboost             # Implementação otimizada de gradient boosting
+lightgbm            # Implementação rápida de gradient boosting
 
-# --- MLOps & Interpretabilidade ---
-mlflow
-shap
+# --- MLOps & Experimentação ---
+mlflow              # Para tracking de experimentos, registro e deploy de modelos
+shap                # Para interpretabilidade e explicação de modelos de ML
+optuna              # NOVO: Para otimização de hiperparâmetros
 
-# --- API Framework ---
-fastapi
-uvicorn[standard]
+# --- API Framework e Servidor ---
+fastapi             # Framework web assíncrono para construir a API
+uvicorn[standard]   # Servidor ASGI de alta performance para rodar o FastAPI
 
-# --- Validação de Dados e Schemas ---
-pydantic
+# --- Validação, Schemas e Configuração ---
+pydantic            # Para validação de dados e criação de schemas da API
+pydantic-settings   # NOVO: Para carregar configurações de variáveis de ambiente de forma robusta
 
-# --- Banco de Dados ---
-SQLAlchemy
-psycopg2-binary
+# --- Banco de Dados e Migrações ---
+SQLAlchemy[asyncio] # ORM para interagir com o banco de dados de forma assíncrona
+psycopg2-binary     # Driver do banco de dados para PostgreSQL
+alembic             # NOVO: Ferramenta para gerenciar migrações de esquema do banco de dados
 
-# --- Autenticação & Segurança ---
-python-multipart
-passlib[bcrypt]
-python-jose[cryptography]
+# --- Autenticação & Segurança (Para APIs mais complexas) ---
+python-multipart    # Necessário para processar formulários e uploads em FastAPI
+passlib[bcrypt]     # Para hashing de senhas (útil se adicionar login de usuário)
+python-jose[cryptography] # Para manuseio de JSON Web Tokens (JWTs) para autenticação
 
 # --- Dependências Auxiliares ---
-# matplotlib (usado pelo SHAP para plots)
-matplotlib
-# joblib (usado para serialização de modelos sklearn)
-joblib
+matplotlib          # Para criação de gráficos (usado pelo SHAP)
+joblib              # Para serialização/desserialização de objetos Python (modelos, scalers)
+
+# --- Banco de Dados e Migrações ---
+SQLAlchemy[asyncio] # ORM para interagir com o banco de dados de forma assíncrona
+psycopg2-binary     # Driver SÍNCRONO para PostgreSQL (usado pelo MLflow)
+asyncpg             # NOVO: Driver ASSÍNCRONO para PostgreSQL (usado pela API com SQLAlchemy)
+alembic             # Ferramenta para gerenciar migrações de esquema do banco de dados
