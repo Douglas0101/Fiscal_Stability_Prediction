@@ -1,30 +1,28 @@
-# Arquivo: Dockerfile
+# Dockerfile
 
-# Use uma imagem base do Python
-FROM python:3.9-slim
+# 1. Usar uma imagem base Python oficial
+FROM python:3.10-slim
 
-# Define o diretório de trabalho dentro do contêiner
-WORKDIR /app
-
-# Define variáveis de ambiente
+# 2. Definir variáveis de ambiente para otimizar o Python no Docker
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Instala dependências do sistema, se necessário
-# RUN apt-get update && apt-get install -y ...
+# 3. Definir o diretório de trabalho dentro do container
+WORKDIR /app
 
-# Copia o arquivo de dependências e instala os pacotes
-# Isso aproveita o cache do Docker, reinstalando apenas se o requirements.txt mudar
+# 4. Copiar o arquivo de dependências e instalar
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copia todo o código do projeto para o diretório de trabalho
-COPY . .
+# 5. Copiar todo o código fonte e os dados necessários para o container
+# Isso garante que tanto a API quanto o treinamento tenham acesso a tudo.
+COPY ./src ./src
+COPY ./data ./data
 
-# Expõe a porta que a API usará dentro do contêiner
+# 6. Expor a porta que a API usará
 EXPOSE 8000
 
-# Comando para iniciar a aplicação com Uvicorn
-# O host 0.0.0.0 torna a API acessível de fora do contêiner
+# 7. Comando padrão para iniciar o servidor da API (Uvicorn)
+# Este comando será executado quando o container da API for iniciado.
 CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000"]

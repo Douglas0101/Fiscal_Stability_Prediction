@@ -1,29 +1,12 @@
-# Dockerfile.mlflow (FINAL)
+# Dockerfile.mlflow
 
-FROM python:3.9-slim
+# 1. Usar a imagem oficial do MLflow como base
+FROM ghcr.io/mlflow/mlflow:v2.9.2
 
-# Argumentos que receberemos do docker-compose.yml
-ARG UID=1000
-ARG GID=1000
-
-# --- NOVO: Instala o curl para que o healthcheck funcione ---
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
-# Instala as dependências Python
-RUN pip install mlflow psycopg2-binary
-
-# Cria a pasta de artefatos
-RUN mkdir -p /mlflow/artifacts
-
-# Cria um grupo e um usuário com os IDs do seu usuário local
-RUN addgroup --gid ${GID} mlflow_group || true
-RUN adduser --disabled-password --no-create-home --uid ${UID} --ingroup mlflow_group mlflow_user
-
-# Dá a posse da pasta de artefatos para o novo usuário
-RUN chown -R mlflow_user:mlflow_group /mlflow
-
-# Define o usuário que rodará o processo
-USER mlflow_user
-
-# Expõe a porta
-EXPOSE 5000
+# 2. Instalar as dependências necessárias para o nosso ambiente
+#    - psycopg2-binary: Para conectar ao banco de dados PostgreSQL.
+#    - curl: Para que o comando do healthcheck do Docker Compose funcione.
+#    A imagem base é baseada em Debian, então usamos `apt-get`.
+RUN apt-get update && apt-get install -y curl && \
+    pip install psycopg2-binary && \
+    rm -rf /var/lib/apt/lists/*

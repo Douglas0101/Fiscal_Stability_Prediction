@@ -1,61 +1,94 @@
+# docker-compose.yml (Versão Final com Cadeia de Saúde Completa)
+
 services:
-  db:
-    image: postgres:13-alpine
-    container_name: fiscal_postgres_db
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+  db-mlflow:
+    image: postgres:13
+    container_name: db-mlflow
     restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER_MLFLOW}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_MLFLOW}
+      - POSTGRES_DB=${POSTGRES_DB_MLFLOW}
+    volumes:
+      - mlflow_db_data:/var/lib/postgresql/data
     networks:
       - fiscal-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_MLFLOW} -d ${POSTGRES_DB_MLFLOW}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  mlflow_server:
+  db-api:
+    image: postgres:13
+    container_name: db-api
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER_API}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_API}
+      - POSTGRES_DB=${POSTGRES_DB_API}
+    volumes:
+      - api_db_data:/var/lib/postgresql/data
+    networks:
+      - fiscal-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_API} -d ${POSTGRES_DB_API}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mlflow-server:
     build:
       context: .
       dockerfile: Dockerfile.mlflow
-    container_name: fiscal_mlflow_server
+    container_name: mlflow-server
+    restart: unless-stopped
     ports:
       - "5000:5000"
-    volumes:
-      - ./mlruns_data:/mlflow/artifacts
-    depends_on:
-      - db
-    restart: unless-stopped
     command: >
       mlflow server
-      --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      --default-artifact-root /mlflow/artifacts
-      --serve-artifacts
-      --host 0.0.0.0
-      --log-level debug
+      --host 0.0.0.0 --port 5000
+      --backend-store-uri postgresql://${POSTGRES_USER_MLFLOW}:${POSTGRES_PASSWORD_MLFLOW}@db-mlflow:5432/${POSTGRES_DB_MLFLOW}
+      --default-artifact-root /mlruns
+    volumes:
+      - ./mlruns_data:/mlruns
     networks:
       - fiscal-net
+    depends_on:
+      db-mlflow:
+        condition: service_healthy
+    # --- ADIÇÃO DO HEALTHCHECK PARA O MLFLOW SERVER ---
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
 
   api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: fiscal_api_service
+    container_name: api
+    restart: unless-stopped
     ports:
       - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      - MLFLOW_TRACKING_URI=http://mlflow_server:5000
-      - API_KEY=${API_KEY}
-    depends_on:
-      - mlflow_server # Removemos a condição de 'service_healthy' por enquanto
-    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./mlruns_data:/mlruns
     networks:
       - fiscal-net
-
-volumes:
-  postgres_data:
+    # --- ALTERAÇÃO DA CONDIÇÃO DE DEPENDÊNCIA ---
+    depends_on:
+      mlflow-server:
+        condition: service_healthy # <-- A MUDANÇA CRÍTICA
+      db-api:
+        condition: service_healthy
 
 networks:
   fiscal-net:
     driver: bridge
+
+volumes:
+  mlflow_db_data:
+  api_db_data:
