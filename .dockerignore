@@ -1,12 +1,38 @@
-# =======================================================
-# ARQUIVOS IGNORADOS PELO DOCKER (BACKEND)
-# Local: Raiz do projeto (./.dockerignore)
-# =======================================================
-.dockerignore
-.env
+# Ficheiro .dockerignore
+
+# Controlo de versão
 .git
 .gitignore
-.idea
+.dockerignore
+
+# Ambientes virtuais e caches do Python
+.venv
+venv
 __pycache__
 *.pyc
-frontend/
+*.pyo
+*.pyd
+
+# Ficheiros de configuração de IDEs
+.vscode/
+.idea/
+
+# Ficheiros de ambiente (nunca devem ir para a imagem)
+.env
+.env.*
+
+# Dados e Notebooks (não necessários na imagem final da API)
+data/
+notebooks/
+mlruns_data/
+*.csv
+*.md
+*.pdf
+*.ipynb
+
+# Ficheiros de teste
+tests/
+pytest.ini
+
+# Outros
+*.log

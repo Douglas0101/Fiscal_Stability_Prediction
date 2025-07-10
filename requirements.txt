@@ -1,27 +1,32 @@
-# requirements.txt
-
-# --- API & Web ---
+# --- Frameworks Web e Servidor ---
 fastapi
-uvicorn[standard]
-pydantic
-pydantic-settings
-python-dotenv
+uvicorn[standard]  # Servidor ASGI para FastAPI, com extras para melhor performance
+gunicorn         # Servidor WSGI de produção, uma alternativa robusta
 
-# --- Banco de Dados ---
-sqlalchemy
-alembic
-psycopg2-binary # Driver para PostgreSQL
-asyncpg         # Driver assíncrono para PostgreSQL
+# --- Machine Learning: Treino e Inferência ---
+mlflow             # Plataforma central de MLOps
+scikit-learn       # Base para modelos, pipelines e pré-processamento
+imblearn           # Para a técnica de reamostragem SMOTE
+xgboost            # Modelo XGBoost
+lightgbm           # Modelo LightGBM
+torch              # Framework para o modelo de rede neural
+torchvision        # Dependência comum para o PyTorch
+interpret          # Para o modelo Explainable Boosting Machine (EBM)
+shap               # Para a explicabilidade de modelos (SHAP)
+optuna             # Para otimização de hiperparâmetros
 
-# --- ML & Data Science ---
-mlflow
-scikit-learn
-lightgbm
-xgboost
-torch
-shap
-optuna
-joblib
-matplotlib
-imbalanced-learn
-interpret
+# --- Manipulação de Dados e Base de Dados ---
+pandas             # Manipulação de dados tabulares
+SQLAlchemy         # ORM para interagir com a base de dados
+pyodbc             # Driver para conectar a bases de dados SQL Server/ODBC
+alembic            # Para migrações de esquema da base de dados
+
+# --- Autenticação e Configuração ---
+passlib[bcrypt]    # Para hashing de senhas (bcrypt é um extra importante)
+python-jose        # Para manipulação de tokens JWT
+pydantic           # Validação de dados (usado pelo FastAPI)
+pydantic-settings  # Para carregar configurações a partir de variáveis de ambiente
+python-dotenv      # Para carregar o ficheiro .env
+
+# --- Visualização (Necessária para o Treino) ---
+matplotlib         # Usado pelo train.py para gerar e salvar os gráficos do SHAP

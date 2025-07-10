@@ -1,28 +1,10 @@
-# docker-compose.yml (Versão Final com Cadeia de Saúde Completa)
+# A linha 'version' foi removida, pois é obsoleta.
 
 services:
-  db-mlflow:
-    image: postgres:13
-    container_name: db-mlflow
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER_MLFLOW}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_MLFLOW}
-      - POSTGRES_DB=${POSTGRES_DB_MLFLOW}
-    volumes:
-      - mlflow_db_data:/var/lib/postgresql/data
-    networks:
-      - fiscal-net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_MLFLOW} -d ${POSTGRES_DB_MLFLOW}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
+  # Base de Dados para a API de Previsão
   db-api:
-    image: postgres:13
+    image: postgres:15-alpine
     container_name: db-api
-    restart: unless-stopped
     environment:
       - POSTGRES_USER=${POSTGRES_USER_API}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_API}
@@ -31,64 +13,91 @@ services:
       - api_db_data:/var/lib/postgresql/data
     networks:
       - fiscal-net
+    ports:
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_API} -d ${POSTGRES_DB_API}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
-  mlflow-server:
-    build:
-      context: .
-      dockerfile: Dockerfile.mlflow
-    container_name: mlflow-server
-    restart: unless-stopped
-    ports:
-      - "5000:5000"
-    command: >
-      mlflow server
-      --host 0.0.0.0 --port 5000
-      --backend-store-uri postgresql://${POSTGRES_USER_MLFLOW}:${POSTGRES_PASSWORD_MLFLOW}@db-mlflow:5432/${POSTGRES_DB_MLFLOW}
-      --default-artifact-root /mlruns
+  # Base de Dados para o MLflow
+  db-mlflow:
+    image: postgres:15-alpine
+    container_name: db-mlflow
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER_MLFLOW}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_MLFLOW}
+      - POSTGRES_DB=${POSTGRES_DB_MLFLOW}
     volumes:
-      - ./mlruns_data:/mlruns
+      - mlflow_db_data:/var/lib/postgresql/data
     networks:
       - fiscal-net
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_MLFLOW} -d ${POSTGRES_DB_MLFLOW}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Servidor do MLflow
+  mlflow-server:
+    image: ghcr.io/mlflow/mlflow:v2.9.2
+    container_name: mlflow-server
+    command: >
+      sh -c "chown -R 1000:1000 /mlruns_data &&
+             mlflow server
+             --backend-store-uri postgresql://${POSTGRES_USER_MLFLOW}:${POSTGRES_PASSWORD_MLFLOW}@db-mlflow:5432/${POSTGRES_DB_MLFLOW}
+             --default-artifact-root /mlruns_data
+             --host 0.0.0.0
+             --port 5000"
+    ports:
+      - "5000:5000"
+    networks:
+      - fiscal-net
+    volumes:
+      - mlflow_artifacts:/mlruns_data
     depends_on:
       db-mlflow:
         condition: service_healthy
-    # --- ADIÇÃO DO HEALTHCHECK PARA O MLFLOW SERVER ---
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000"]
-      interval: 15s
+      # --- CORREÇÃO APLICADA AQUI ---
+      # Usamos Python para verificar a conexão, pois é mais robusto que depender do 'curl'.
+      test: ["CMD-SHELL", "python -c 'import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.connect((\"127.0.0.1\", 5000))'"]
+      interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 20s
 
+  # Serviço da API de Previsão
   api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: api
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
     env_file:
       - .env
-    volumes:
-      - ./mlruns_data:/mlruns
+    ports:
+      - "8000:8000"
     networks:
       - fiscal-net
-    # --- ALTERAÇÃO DA CONDIÇÃO DE DEPENDÊNCIA ---
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
     depends_on:
-      mlflow-server:
-        condition: service_healthy # <-- A MUDANÇA CRÍTICA
       db-api:
         condition: service_healthy
+      mlflow-server:
+        condition: service_healthy
+
+volumes:
+  api_db_data:
+  mlflow_db_data:
+  mlflow_artifacts:
 
 networks:
   fiscal-net:
     driver: bridge
-
-volumes:
-  mlflow_db_data:
-  api_db_data:

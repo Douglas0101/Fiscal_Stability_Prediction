@@ -1,7 +1,0 @@
-FROM python:3.9-slim
-
-# Instala as dependências Python
-RUN pip install mlflow psycopg2-binary
-
-# Expõe a porta
-EXPOSE 5000

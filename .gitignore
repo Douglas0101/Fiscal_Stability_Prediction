@@ -1,44 +1,35 @@
-# Arquivo .gitignore Otimizado
-
-### Ambientes Virtuais e Dependências Locais ###
-venv/
-env/
-.venv/
-.env
-/node_modules/
-
-### Arquivos Gerados pelo Python ###
+# Ficheiros de Cache e compilados do Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-### Logs ###
-*.log
-app.log*
+# Pastas de ambientes virtuais
+.venv/
+venv/
+env/
 
-### Dados ###
-# Dados nunca devem ser versionados. Use DVC ou armazene na nuvem.
-data/
-
-### Rastreamento de Experimentos (MLflow) ###
-# O diretório mlruns é gerado localmente e não deve ser versionado.
-# O banco de dados do MLflow (se for sqlite) também é ignorado.
-mlruns/
-mlflow.db
-
-### Relatórios e Figuras Geradas ###
-reports/
-*.png
-*.json
-*.md
-
-### Arquivos de IDE e Sistema Operacional ###
+# Ficheiros de IDE
 .idea/
 .vscode/
+
+# Ficheiros temporários e de sistema
 *.swp
+*~
 .DS_Store
 
-### Diretórios incomuns ou de teste ###
-argparse/
-logging/
+# Logs
+*.log
+
+# Artefactos de ML (devem estar no MLflow)
+/models/
+/reports/
+/mlruns/
+/mlruns_data/
+*.png
+*.joblib
+*.pt
+*.json
+
+# Ficheiros específicos do projeto
+temp_*.py
