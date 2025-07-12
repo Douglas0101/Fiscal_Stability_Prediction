@@ -1,7 +1,4 @@
-# A linha 'version' foi removida, pois é obsoleta.
-
 services:
-  # Base de Dados para a API de Previsão
   db-api:
     image: postgres:15-alpine
     container_name: db-api
@@ -22,7 +19,6 @@ services:
       retries: 5
       start_period: 10s
 
-  # Base de Dados para o MLflow
   db-mlflow:
     image: postgres:15-alpine
     container_name: db-mlflow
@@ -43,17 +39,24 @@ services:
       retries: 5
       start_period: 10s
 
-  # Servidor do MLflow
   mlflow-server:
-    image: ghcr.io/mlflow/mlflow:v2.9.2
+    image: ghcr.io/mlflow/mlflow:v2.12.1
     container_name: mlflow-server
+    # --- CORREÇÃO FINAL E DEFINITIVA ---
+    # A lógica do entrypoint é movida para cá, de forma mais robusta.
     command: >
-      sh -c "chown -R 1000:1000 /mlruns_data &&
-             mlflow server
-             --backend-store-uri postgresql://${POSTGRES_USER_MLFLOW}:${POSTGRES_PASSWORD_MLFLOW}@db-mlflow:5432/${POSTGRES_DB_MLFLOW}
-             --default-artifact-root /mlruns_data
-             --host 0.0.0.0
-             --port 5000"
+      sh -c "
+        echo 'Aguardando a base de dados do MLflow...' &&
+        sleep 5 &&
+        echo 'Corrigindo permissões para /mlruns_data...' &&
+        chown -R 1000:1000 /mlruns_data &&
+        echo 'Iniciando o servidor MLflow...' &&
+        mlflow server
+        --host 0.0.0.0
+        --port 5000
+        --backend-store-uri postgresql://${POSTGRES_USER_MLFLOW}:${POSTGRES_PASSWORD_MLFLOW}@db-mlflow:5432/${POSTGRES_DB_MLFLOW}
+        --default-artifact-root /mlruns_data
+      "
     ports:
       - "5000:5000"
     networks:
@@ -64,15 +67,12 @@ services:
       db-mlflow:
         condition: service_healthy
     healthcheck:
-      # --- CORREÇÃO APLICADA AQUI ---
-      # Usamos Python para verificar a conexão, pois é mais robusto que depender do 'curl'.
       test: ["CMD-SHELL", "python -c 'import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.connect((\"127.0.0.1\", 5000))'"]
-      interval: 30s
+      interval: 15s
       timeout: 10s
       retries: 5
-      start_period: 20s
+      start_period: 30s
 
-  # Serviço da API de Previsão
   api:
     build:
       context: .
