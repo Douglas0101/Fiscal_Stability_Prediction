@@ -1,73 +1,98 @@
 import pandas as pd
-import logging
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.compose import ColumnTransformer
-from src.config import settings
+import os
 
-logger = logging.getLogger(__name__)
+# CORRIGIDO: Importa a classe de configuração e a função de logging corretas
+from src.config import AppConfig
+from src.logger_config import get_logger
+
+# CORRIGIDO: Obtém uma instância do logger específica para este ficheiro
+logger = get_logger(__name__)
 
 
-def process_data(input_path: str, output_path: str):
+class DataProcessor:
     """
-    Carrega os dados, aplica pré-processamento (one-hot, scaling) e salva o resultado.
+    Processa os dados, juntando os dados brutos com o alvo e limpando o resultado.
     """
-    try:
-        logger.info(f"Carregando dados de {input_path}")
-        df = pd.read_csv(input_path)
 
-        target_col = settings.model.TARGET_VARIABLE
-        if target_col in df.columns:
-            y = df[[target_col]]
-            df = df.drop(columns=[target_col])
-        else:
-            y = None
+    def __init__(self, config: AppConfig):
+        self.config = config
+        self.raw_data_path = config.raw_data_path
+        self.target_data_path = config.raw_data_with_target_path
+        self.processed_data_path = config.processed_data_path
 
-        # --- CORREÇÃO DE VAZAMENTO ---
-        # Remove as colunas que foram usadas para criar o alvo
-        leaky_features = settings.model.LEAKY_FEATURES
-        existing_leaky_features = [col for col in leaky_features if col in df.columns]
-        if existing_leaky_features:
-            df = df.drop(columns=existing_leaky_features)
-            logger.info(f"Colunas de vazamento removidas para evitar 'colar': {existing_leaky_features}")
-        # ---------------------------
+    def load_datasets(self) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """Carrega o dataset principal e o dataset com a coluna-alvo."""
+        try:
+            logger.info(f"A carregar dados brutos de: {self.raw_data_path}")
+            df_raw = pd.read_csv(self.raw_data_path)
 
-        cols_to_drop = settings.model.DROP_COLUMNS
-        existing_cols_to_drop = [col for col in cols_to_drop if col in df.columns]
-        if existing_cols_to_drop:
-            df = df.drop(columns=existing_cols_to_drop)
-            logger.info(f"Colunas desnecessárias removidas: {existing_cols_to_drop}")
+            logger.info(f"A carregar dados com o alvo de: {self.target_data_path}")
+            df_target = pd.read_csv(self.target_data_path)
 
-        categorical_features = [col for col in settings.model.CATEGORICAL_FEATURES if col in df.columns]
-        numerical_features = [col for col in df.columns if col not in categorical_features]
+            logger.info("Datasets carregados com sucesso.")
+            return df_raw, df_target
+        except FileNotFoundError as e:
+            logger.error(f"Ficheiro de dados não encontrado: {e.filename}")
+            raise
 
-        logger.info(f"Features Categóricas para One-Hot Encoding: {categorical_features}")
-        logger.info(f"Features Numéricas para Scaling: {numerical_features}")
+    def merge_data_with_target(self, df_raw: pd.DataFrame, df_target: pd.DataFrame) -> pd.DataFrame:
+        """
+        Junta os dados brutos com a coluna-alvo.
+        """
+        logger.info("A juntar dados brutos com a coluna-alvo.")
 
-        preprocessor = ColumnTransformer(
-            transformers=[
-                ('num', StandardScaler(), numerical_features),
-                ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), categorical_features)
-            ],
-            remainder='drop'
-        )
+        target_cols = ['country_id', 'year', self.config.model.TARGET_VARIABLE]
+        df_target_subset = df_target[target_cols]
 
-        logger.info("Iniciando o processo de fit e transform das features.")
-        processed_features = preprocessor.fit_transform(df)
+        df_merged = pd.merge(df_raw, df_target_subset, on=['country_id', 'year'], how='left')
 
-        new_cat_features = preprocessor.named_transformers_['cat'].get_feature_names_out(categorical_features)
-        processed_cols = numerical_features + list(new_cat_features)
+        initial_rows = len(df_merged)
+        df_merged.dropna(subset=[self.config.model.TARGET_VARIABLE], inplace=True)
+        final_rows = len(df_merged)
+        logger.info(f"{initial_rows - final_rows} linhas removidas por não terem um alvo correspondente.")
 
-        df_processed = pd.DataFrame(processed_features, columns=processed_cols, index=df.index)
-        logger.info("Processamento de features concluído.")
+        df_merged[self.config.model.TARGET_VARIABLE] = df_merged[self.config.model.TARGET_VARIABLE].astype(int)
 
-        if y is not None:
-            df_final = pd.concat([y.reset_index(drop=True), df_processed.reset_index(drop=True)], axis=1)
-        else:
-            df_final = df_processed
+        logger.info("Merge concluído com sucesso.")
+        return df_merged
 
-        logger.info(f"Salvando dados processados em {output_path}")
-        df_final.to_csv(output_path, index=False)
+    def clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Limpa os dados, tratando de valores em falta e removendo colunas."""
+        logger.info("A iniciar a limpeza de dados...")
 
-    except Exception as e:
-        logger.error(f"Um erro inesperado ocorreu durante o processamento dos dados: {e}", exc_info=True)
-        raise
+        if self.config.model.DROP_COLUMNS:
+            df = df.drop(columns=self.config.model.DROP_COLUMNS, errors='ignore')
+            logger.info(f"Colunas removidas: {self.config.model.DROP_COLUMNS}")
+
+        for col in df.columns:
+            if df[col].dtype == 'object' and col not in self.config.model.CATEGORICAL_FEATURES:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+
+        logger.info("Limpeza de dados concluída.")
+        return df
+
+    def save_data(self, df: pd.DataFrame):
+        """Salva o DataFrame processado num ficheiro CSV."""
+        try:
+            os.makedirs(os.path.dirname(self.processed_data_path), exist_ok=True)
+            logger.info(f"A salvar dados processados em: {self.processed_data_path}")
+            df.to_csv(self.processed_data_path, index=False)
+            logger.info("Dados processados salvos com sucesso.")
+        except IOError as e:
+            logger.error(f"Erro ao salvar o ficheiro de dados processados: {e}")
+            raise
+
+    def run(self):
+        """Executa o pipeline completo de processamento de dados."""
+        logger.info("--- INICIANDO PIPELINE DE PROCESSAMENTO DE DADOS ---")
+        df_raw, df_target = self.load_datasets()
+        df_merged = self.merge_data_with_target(df_raw, df_target)
+        cleaned_df = self.clean_data(df_merged)
+        self.save_data(cleaned_df)
+        logger.info("--- PIPELINE DE PROCESSAMENTO DE DADOS CONCLUÍDO ---")
+
+
+if __name__ == "__main__":
+    config = AppConfig()
+    processor = DataProcessor(config)
+    processor.run()

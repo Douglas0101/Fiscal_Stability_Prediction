@@ -1,121 +1,103 @@
 (rapids-25.06) ~/PycharmProjects/Fiscal_Stability_Prediction git:[master]
-docker-compose up --build
-Compose now can delegate build to bake for better performances
-Just set COMPOSE_BAKE=true
-[+] Building 2.5s (34/34) FINISHED                                                                                                                                          docker:default
- => [mlflow-server internal] load build definition from Dockerfile.mlflow                                                                                                             0.0s
- => => transferring dockerfile: 228B                                                                                                                                                  0.0s
- => [mlflow-server internal] load metadata for ghcr.io/mlflow/mlflow:latest                                                                                                           0.0s
- => [mlflow-server internal] load .dockerignore                                                                                                                                       0.0s
- => => transferring context: 500B                                                                                                                                                     0.0s
- => [mlflow-server 1/2] FROM ghcr.io/mlflow/mlflow:latest                                                                                                                             0.0s
- => CACHED [mlflow-server 2/2] RUN pip install --no-cache-dir psycopg2-binary                                                                                                         0.0s
- => [mlflow-server] exporting to image                                                                                                                                                0.2s
- => => exporting layers                                                                                                                                                               0.0s
- => => writing image sha256:f72b369817ac6667ff1c003eddd6d6d4f2db9a7b8bd744195da6b2721a1636e3                                                                                          0.0s
- => => naming to docker.io/library/fiscal_stability_prediction-mlflow-server                                                                                                          0.1s
- => [mlflow-server] resolving provenance for metadata file                                                                                                                            0.0s
- => [api internal] load build definition from Dockerfile                                                                                                                              0.0s
- => => transferring dockerfile: 801B                                                                                                                                                  0.0s
- => WARN: FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)                                                                                                        0.0s
- => [dashboard internal] load metadata for docker.io/library/python:3.10-slim                                                                                                         1.6s
- => [api internal] load .dockerignore                                                                                                                                                 0.0s
- => => transferring context: 500B                                                                                                                                                     0.0s
- => [dashboard builder 1/5] FROM docker.io/library/python:3.10-slim@sha256:9dd6774a1276178f94b0cc1fb1f0edd980825d0ea7634847af9940b1b6273c13                                           0.0s
- => [api internal] load build context                                                                                                                                                 0.0s
- => => transferring context: 25.54kB                                                                                                                                                  0.0s
- => CACHED [dashboard builder 2/5] WORKDIR /app                                                                                                                                       0.0s
- => CACHED [dashboard stage-1 3/7] RUN apt-get update && apt-get install -y --no-install-recommends     libpq-dev     && rm -rf /var/lib/apt/lists/*                                  0.0s
- => CACHED [dashboard builder 3/5] RUN apt-get update && apt-get install -y --no-install-recommends     build-essential     libpq-dev     && rm -rf /var/lib/apt/lists/*              0.0s
- => CACHED [api builder 4/5] COPY requirements.txt .                                                                                                                                  0.0s
- => CACHED [api builder 5/5] RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt                                                                       0.0s
- => CACHED [api stage-1 4/7] COPY --from=builder /app/wheels /wheels                                                                                                                  0.0s
- => CACHED [api stage-1 5/7] COPY --from=builder /app/requirements.txt .                                                                                                              0.0s
- => CACHED [api stage-1 6/7] RUN pip install --no-cache /wheels/*                                                                                                                     0.0s
- => [api stage-1 7/7] COPY . .                                                                                                                                                        0.0s
- => [api] exporting to image                                                                                                                                                          0.2s
- => => exporting layers                                                                                                                                                               0.0s
- => => writing image sha256:558e98945054bd54a10f337e1b81783f36835b86965a7b8da9c8952b97c06ed3                                                                                          0.0s
- => => naming to docker.io/library/fiscal_stability_prediction-api                                                                                                                    0.1s
- => [api] resolving provenance for metadata file                                                                                                                                      0.0s
- => [dashboard internal] load build definition from Dockerfile.dashboard                                                                                                              0.0s
- => => transferring dockerfile: 899B                                                                                                                                                  0.0s
- => WARN: FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)                                                                                                        0.0s
- => [dashboard internal] load .dockerignore                                                                                                                                           0.0s
- => => transferring context: 500B                                                                                                                                                     0.0s
- => [dashboard internal] load build context                                                                                                                                           0.0s
- => => transferring context: 3.21kB                                                                                                                                                   0.0s
- => CACHED [dashboard builder 4/5] COPY requirements.txt .                                                                                                                            0.0s
- => CACHED [dashboard builder 5/5] RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt                                                                 0.0s
- => CACHED [dashboard stage-1 4/7] COPY --from=builder /app/wheels /wheels                                                                                                            0.0s
- => CACHED [dashboard stage-1 5/7] COPY --from=builder /app/requirements.txt .                                                                                                        0.0s
- => CACHED [dashboard stage-1 6/7] RUN pip install --no-cache /wheels/*                                                                                                               0.0s
- => CACHED [dashboard stage-1 7/7] COPY . .                                                                                                                                           0.0s
- => [dashboard] exporting to image                                                                                                                                                    0.2s
- => => exporting layers                                                                                                                                                               0.0s
- => => writing image sha256:d1a48cbd29016f0443275b77ab5b5190beed9d70d55949c211bf0c3f225ee53a                                                                                          0.0s
- => => naming to docker.io/library/fiscal_stability_prediction-dashboard                                                                                                              0.1s
- => [dashboard] resolving provenance for metadata file                                                                                                                                0.0s
-[+] Running 8/8
- ✔ api                                   Built                                                                                                                                        0.0s
- ✔ dashboard                             Built                                                                                                                                        0.0s
- ✔ mlflow-server                         Built                                                                                                                                        0.0s
- ✔ Container db_mlflow                   Running                                                                                                                                      0.0s
- ✔ Container db_api                      Running                                                                                                                                      0.0s
- ✔ Container mlflow_server               Running                                                                                                                                      0.0s
- ✔ Container fiscal_stability_dashboard  Recreated                                                                                                                                    1.7s
- ✔ Container fiscal_stability_api        Recreated                                                                                                                                    1.0s
-Attaching to db_api, db_mlflow, fiscal_stability_api, fiscal_stability_dashboard, mlflow_server
-fiscal_stability_dashboard  |
-fiscal_stability_dashboard  | Collecting usage statistics. To deactivate, set browser.gatherUsageStats to false.
-fiscal_stability_dashboard  |
-fiscal_stability_dashboard  |
-fiscal_stability_dashboard  |   You can now view your Streamlit app in your browser.
-fiscal_stability_dashboard  |
-fiscal_stability_dashboard  |   URL: http://0.0.0.0:8050
-fiscal_stability_dashboard  |
-fiscal_stability_api        | INFO:     Started server process [1]
-fiscal_stability_api        | INFO:     Waiting for application startup.
-fiscal_stability_api        | INFO:src.api:API iniciando... Carregando modelo de ML.
-fiscal_stability_api        | WARNING:src.api:Tentativa 1 falhou ao carregar modelo: RESOURCE_DOES_NOT_EXIST: Registered Model with name=fiscal-stability-xgb not found
-fiscal_stability_api        | WARNING:src.api:Tentativa 2 falhou ao carregar modelo: RESOURCE_DOES_NOT_EXIST: Registered Model with name=fiscal-stability-xgb not found
-fiscal_stability_api        | WARNING:src.api:Tentativa 3 falhou ao carregar modelo: RESOURCE_DOES_NOT_EXIST: Registered Model with name=fiscal-stability-xgb not found
-fiscal_stability_api        | WARNING:src.api:Tentativa 4 falhou ao carregar modelo: RESOURCE_DOES_NOT_EXIST: Registered Model with name=fiscal-stability-xgb not found
-fiscal_stability_api        | WARNING:src.api:Tentativa 5 falhou ao carregar modelo: RESOURCE_DOES_NOT_EXIST: Registered Model with name=fiscal-stability-xgb not found
-fiscal_stability_api        | WARNING:src.api:Tentativa 6 falhou ao carregar modelo: RESOURCE_DOES_NOT_EXIST: Registered Model with name=fiscal-stability-xgb not found
-fiscal_stability_api        | WARNING:src.api:Tentativa 7 falhou ao carregar modelo: RESOURCE_DOES_NOT_EXIST: Registered Model with name=fiscal-stability-xgb not found
-fiscal_stability_api        | WARNING:src.api:Tentativa 8 falhou ao carregar modelo: RESOURCE_DOES_NOT_EXIST: Registered Model with name=fiscal-stability-xgb not found
-fiscal_stability_api        | WARNING:src.api:Tentativa 9 falhou ao carregar modelo: RESOURCE_DOES_NOT_EXIST: Registered Model with name=fiscal-stability-xgb not found
-fiscal_stability_api        | WARNING:src.api:Tentativa 10 falhou ao carregar modelo: RESOURCE_DOES_NOT_EXIST: Registered Model with name=fiscal-stability-xgb not found
-fiscal_stability_api        | ERROR:src.api:Não foi possível carregar o modelo do MLflow após várias tentativas.
-fiscal_stability_api        | 2025-07-13 15:52:07,968 INFO sqlalchemy.engine.Engine select pg_catalog.version()
-fiscal_stability_api        | 2025-07-13 15:52:07,968 INFO sqlalchemy.engine.Engine [raw sql] ()
-fiscal_stability_api        | INFO:sqlalchemy.engine.Engine:select pg_catalog.version()
-fiscal_stability_api        | INFO:sqlalchemy.engine.Engine:[raw sql] ()
-fiscal_stability_api        | 2025-07-13 15:52:07,970 INFO sqlalchemy.engine.Engine select current_schema()
-fiscal_stability_api        | INFO:sqlalchemy.engine.Engine:select current_schema()
-fiscal_stability_api        | INFO:sqlalchemy.engine.Engine:[raw sql] ()
-fiscal_stability_api        | 2025-07-13 15:52:07,970 INFO sqlalchemy.engine.Engine [raw sql] ()
-fiscal_stability_api        | 2025-07-13 15:52:07,972 INFO sqlalchemy.engine.Engine show standard_conforming_strings
-fiscal_stability_api        | INFO:sqlalchemy.engine.Engine:show standard_conforming_strings
-fiscal_stability_api        | INFO:sqlalchemy.engine.Engine:[raw sql] ()
-fiscal_stability_api        | 2025-07-13 15:52:07,972 INFO sqlalchemy.engine.Engine [raw sql] ()
-fiscal_stability_api        | 2025-07-13 15:52:07,974 INFO sqlalchemy.engine.Engine BEGIN (implicit)
-fiscal_stability_api        | INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
-fiscal_stability_api        | 2025-07-13 15:52:07,978 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname
-fiscal_stability_api        | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace
-fiscal_stability_api        | WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
-fiscal_stability_api        | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname
-fiscal_stability_api        | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace
-fiscal_stability_api        | WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
-fiscal_stability_api        | 2025-07-13 15:52:07,978 INFO sqlalchemy.engine.Engine [generated in 0.00025s] ('financial_data', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
-fiscal_stability_api        | INFO:sqlalchemy.engine.Engine:[generated in 0.00025s] ('financial_data', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
-fiscal_stability_api        | 2025-07-13 15:52:07,981 INFO sqlalchemy.engine.Engine COMMIT
-fiscal_stability_api        | INFO:sqlalchemy.engine.Engine:COMMIT
-fiscal_stability_api        | INFO:src.api:Tabelas prontas. API operacional.
-fiscal_stability_api        | INFO:     Application startup complete.
-fiscal_stability_api        | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-fiscal_stability_api        | INFO:     172.19.0.1:52600 - "GET / HTTP/1.1" 404 Not Found
-
-
-w Enable Watch
+docker-compose logs --tail=100 api
+WARN[0000] /home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+fiscal_stability_api  |     return await connect_utils._connect(
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/asyncpg/connect_utils.py", line 1049, in _connect
+fiscal_stability_api  |     conn = await _connect_addr(
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/asyncpg/connect_utils.py", line 886, in _connect_addr
+fiscal_stability_api  |     return await __connect_addr(params, True, *args)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/asyncpg/connect_utils.py", line 934, in __connect_addr
+fiscal_stability_api  |     await connected
+fiscal_stability_api  | asyncpg.exceptions.InvalidCatalogNameError: database "fiscal_stability_db" does not exist
+fiscal_stability_api  |
+fiscal_stability_api  | ERROR:    Application startup failed. Exiting.
+fiscal_stability_api  | INFO:     Stopping reloader process [1]
+fiscal_stability_api  | INFO:     Will watch for changes in these directories: ['/app']
+fiscal_stability_api  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+fiscal_stability_api  | INFO:     Started reloader process [1] using StatReload
+fiscal_stability_api  | 2025-07-14 03:52:03,769 - src.api - INFO - API iniciando... Conectando à base de dados e carregando modelo de ML.
+fiscal_stability_api  | 2025-07-14 03:52:03,770 - src.database - INFO - Tentativa 1/5 de conectar à base de dados...
+fiscal_stability_api  | INFO:     Started server process [8]
+fiscal_stability_api  | INFO:     Waiting for application startup.
+fiscal_stability_api  | 2025-07-14 03:52:03,774 - src.database - WARNING - Falha ao conectar à base de dados na tentativa 1: database "fiscal_stability_db" does not exist
+fiscal_stability_api  | 2025-07-14 03:52:03,774 - src.database - INFO - A aguardar 5 segundos antes de tentar novamente...
+fiscal_stability_api  | 2025-07-14 03:52:08,779 - src.database - INFO - Tentativa 2/5 de conectar à base de dados...
+fiscal_stability_api  | 2025-07-14 03:52:08,788 - src.database - WARNING - Falha ao conectar à base de dados na tentativa 2: database "fiscal_stability_db" does not exist
+fiscal_stability_api  | 2025-07-14 03:52:08,788 - src.database - INFO - A aguardar 5 segundos antes de tentar novamente...
+fiscal_stability_api  | 2025-07-14 03:52:13,793 - src.database - INFO - Tentativa 3/5 de conectar à base de dados...
+fiscal_stability_api  | 2025-07-14 03:52:13,799 - src.database - WARNING - Falha ao conectar à base de dados na tentativa 3: database "fiscal_stability_db" does not exist
+fiscal_stability_api  | 2025-07-14 03:52:13,799 - src.database - INFO - A aguardar 5 segundos antes de tentar novamente...
+fiscal_stability_api  | 2025-07-14 03:52:18,804 - src.database - INFO - Tentativa 4/5 de conectar à base de dados...
+fiscal_stability_api  | 2025-07-14 03:52:18,812 - src.database - WARNING - Falha ao conectar à base de dados na tentativa 4: database "fiscal_stability_db" does not exist
+fiscal_stability_api  | 2025-07-14 03:52:18,812 - src.database - INFO - A aguardar 5 segundos antes de tentar novamente...
+fiscal_stability_api  | 2025-07-14 03:52:23,816 - src.database - INFO - Tentativa 5/5 de conectar à base de dados...
+fiscal_stability_api  | 2025-07-14 03:52:23,824 - src.database - WARNING - Falha ao conectar à base de dados na tentativa 5: database "fiscal_stability_db" does not exist
+fiscal_stability_api  | 2025-07-14 03:52:23,824 - src.database - ERROR - Não foi possível estabelecer conexão com a base de dados após várias tentativas.
+fiscal_stability_api  | ERROR:    Traceback (most recent call last):
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/starlette/routing.py", line 694, in lifespan
+fiscal_stability_api  |     async with self.lifespan_context(app) as maybe_state:
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/contextlib.py", line 199, in __aenter__
+fiscal_stability_api  |     return await anext(self.gen)
+fiscal_stability_api  |   File "/app/src/api.py", line 55, in lifespan
+fiscal_stability_api  |     await create_db_and_tables()
+fiscal_stability_api  |   File "/app/src/database.py", line 27, in create_db_and_tables
+fiscal_stability_api  |     async with engine.begin() as conn:
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/contextlib.py", line 199, in __aenter__
+fiscal_stability_api  |     return await anext(self.gen)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/ext/asyncio/engine.py", line 1066, in begin
+fiscal_stability_api  |     async with conn:
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/ext/asyncio/base.py", line 121, in __aenter__
+fiscal_stability_api  |     return await self.start(is_ctxmanager=True)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/ext/asyncio/engine.py", line 274, in start
+fiscal_stability_api  |     await greenlet_spawn(self.sync_engine.connect)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+fiscal_stability_api  |     result = context.throw(*sys.exc_info())
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 3273, in connect
+fiscal_stability_api  |     return self._connection_cls(self)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+fiscal_stability_api  |     self._dbapi_connection = engine.raw_connection()
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 3297, in raw_connection
+fiscal_stability_api  |     return self.pool.connect()
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+fiscal_stability_api  |     return _ConnectionFairy._checkout(self)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+fiscal_stability_api  |     fairy = _ConnectionRecord.checkout(pool)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/pool/base.py", line 713, in checkout
+fiscal_stability_api  |     rec = pool._do_get()
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/pool/impl.py", line 179, in _do_get
+fiscal_stability_api  |     with util.safe_reraise():
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+fiscal_stability_api  |     raise exc_value.with_traceback(exc_tb)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+fiscal_stability_api  |     return self._create_connection()
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
+fiscal_stability_api  |     return _ConnectionRecord(self)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/pool/base.py", line 675, in __init__
+fiscal_stability_api  |     self.__connect()
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/pool/base.py", line 901, in __connect
+fiscal_stability_api  |     with util.safe_reraise():
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+fiscal_stability_api  |     raise exc_value.with_traceback(exc_tb)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/pool/base.py", line 897, in __connect
+fiscal_stability_api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/engine/create.py", line 646, in connect
+fiscal_stability_api  |     return dialect.connect(*cargs, **cparams)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/engine/default.py", line 625, in connect
+fiscal_stability_api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 961, in connect
+fiscal_stability_api  |     await_only(creator_fn(*arg, **kw)),
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+fiscal_stability_api  |     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+fiscal_stability_api  |     value = await result
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/asyncpg/connection.py", line 2421, in connect
+fiscal_stability_api  |     return await connect_utils._connect(
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/asyncpg/connect_utils.py", line 1049, in _connect
+fiscal_stability_api  |     conn = await _connect_addr(
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/asyncpg/connect_utils.py", line 886, in _connect_addr
+fiscal_stability_api  |     return await __connect_addr(params, True, *args)
+fiscal_stability_api  |   File "/usr/local/lib/python3.10/site-packages/asyncpg/connect_utils.py", line 934, in __connect_addr
+fiscal_stability_api  |     await connected
+fiscal_stability_api  | asyncpg.exceptions.InvalidCatalogNameError: database "fiscal_stability_db" does not exist
+fiscal_stability_api  |
+fiscal_stability_api  | ERROR:    Application startup failed. Exiting.

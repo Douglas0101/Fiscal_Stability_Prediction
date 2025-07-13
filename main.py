@@ -1,80 +1,79 @@
-import sys
+import subprocess
+import time
 import os
-import logging
-import argparse
 
-# Adiciona a pasta raiz do projeto ao caminho de busca do Python
-project_root = os.path.dirname(os.path.abspath(__file__))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+# CORRIGIDO: Importa a função 'get_logger' e a configuração
+from src.logger_config import get_logger
+from src.config import AppConfig
 
-from src.logger_config import setup_logging
-from src.data_processing import process_data
-from src.train import train_model
-from src.create_target import generate_target_variable
-from src.config import settings
+# CORRIGIDO: Obtém uma instância do logger específica para este ficheiro
+logger = get_logger(__name__)
 
-setup_logging()
-logger = logging.getLogger(__name__)
 
-def run_target_creation():
-    logger.info("==================================================")
-    logger.info("INICIANDO O PIPELINE DE CRIAÇÃO DA VARIÁVEL ALVO")
-    logger.info("==================================================")
+def run_command(command, service_name):
+    """Executa um comando no terminal e regista o output."""
+    logger.info(f"A executar comando para o serviço '{service_name}': {' '.join(command)}")
     try:
-        generate_target_variable(
-            input_path=settings.RAW_DATA_PATH,
-            output_path=settings.RAW_DATA_WITH_TARGET_PATH
-        )
-        logger.info("Pipeline de criação da variável alvo concluído com sucesso.")
-    except Exception as e:
-        logger.error(f"Falha no pipeline de criação da variável alvo: {e}", exc_info=True)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding='utf-8')
 
-def run_data_processing():
-    logger.info("==================================================")
-    logger.info("INICIANDO O PIPELINE DE PROCESSAMENTO DE DADOS")
-    logger.info("==================================================")
-    try:
-        process_data(
-            input_path=settings.RAW_DATA_WITH_TARGET_PATH,
-            output_path=settings.PROCESSED_DATA_PATH
-        )
-        logger.info("Pipeline de processamento de dados concluído com sucesso.")
-    except Exception as e:
-        logger.error(f"Falha no pipeline de processamento de dados: {e}", exc_info=True)
+        # Log em tempo real
+        for line in process.stdout:
+            logger.info(f"[{service_name}] {line.strip()}")
+        for line in process.stderr:
+            logger.error(f"[{service_name}-ERROR] {line.strip()}")
 
-def run_model_training(model_choice: str):
-    logger.info("==================================================")
-    logger.info(f"INICIANDO O PIPELINE DE TREINAMENTO PARA O MODELO: {model_choice.upper()}")
-    logger.info("==================================================")
-    try:
-        train_model(data_path=settings.PROCESSED_DATA_PATH, model_choice=model_choice)
-        logger.info(f"Pipeline de treinamento do modelo {model_choice.upper()} concluído com sucesso.")
+        process.wait()
+
+        if process.returncode == 0:
+            logger.info(f"Comando para '{service_name}' executado com sucesso.")
+            return True
+        else:
+            logger.error(f"Erro ao executar comando para '{service_name}'. Código de saída: {process.returncode}")
+            return False
+
+    except FileNotFoundError:
+        logger.error(f"Comando não encontrado. Certifica-te que 'docker-compose' está instalado e no PATH do sistema.")
+        return False
     except Exception as e:
-        logger.error(f"Falha no pipeline de treinamento do modelo: {e}", exc_info=True)
+        logger.error(f"Uma excepção ocorreu ao executar o comando para '{service_name}': {e}")
+        return False
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Pipeline de Machine Learning para Estabilidade Fiscal.")
-    subparsers = parser.add_subparsers(dest='command', required=True, help='Comandos disponíveis')
+    """Orquestrador principal para o pipeline de ML."""
+    config = AppConfig()
 
-    parser_create_target = subparsers.add_parser('create-target', help='Cria a variável alvo nos dados brutos.')
-    parser_create_target.set_defaults(func=lambda args: run_target_creation())
+    logger.info("--- INICIANDO ORQUESTRADOR DO PIPELINE DE ML ---")
 
-    parser_process = subparsers.add_parser('process-data', help='Executa o pipeline de processamento de dados.')
-    parser_process.set_defaults(func=lambda args: run_data_processing())
+    if not run_command(["docker-compose", "up", "-d", "--build"], "docker-compose up"):
+        logger.critical("Falha ao iniciar os serviços Docker. A abortar o pipeline.")
+        return
 
-    parser_train = subparsers.add_parser('train-model', help='Executa o pipeline de treinamento do modelo.')
-    parser_train.add_argument(
-        '--model',
-        type=str,
-        default='rf',
-        choices=['rf', 'lgbm', 'xgb', 'pytorch'],
-        help='Selecione o modelo para treinar: rf, lgbm, xgb, pytorch'
-    )
-    parser_train.set_defaults(func=lambda args: run_model_training(args.model))
+    logger.info("Serviços Docker iniciados. A aguardar 15 segundos para a estabilização...")
+    time.sleep(15)
 
-    args = parser.parse_args()
-    args.func(args)
+    logger.info("--- A iniciar o pipeline de processamento de dados ---")
+    if not run_command(["docker-compose", "exec", "api", "python", config.data_processing_script_path],
+                       "data-processing"):
+        logger.critical("Falha no pipeline de processamento de dados. A abortar o pipeline.")
+        return
 
-if __name__ == '__main__':
+    logger.info("--- A iniciar o pipeline de treino do modelo ---")
+    model_to_train = config.default_model
+    if not run_command(["docker-compose", "exec", "api", "python", config.train_script_path, model_to_train],
+                       "model-training"):
+        logger.critical("Falha no pipeline de treino do modelo. A abortar o pipeline.")
+        return
+
+    logger.info("--- A reiniciar o serviço da API para carregar o modelo treinado ---")
+    if not run_command(["docker-compose", "restart", "api"], "api-restart"):
+        logger.critical("Falha ao reiniciar a API.")
+        return
+
+    logger.info("--- PIPELINE DE ML CONCLUÍDO COM SUCESSO! ---")
+    logger.info(f"API disponível em http://localhost:{config.api_port}/docs")
+    logger.info(f"MLflow UI disponível em http://localhost:{config.mlflow_port}")
+
+
+if __name__ == "__main__":
     main()

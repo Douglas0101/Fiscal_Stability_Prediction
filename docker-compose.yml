@@ -1,111 +1,84 @@
+version: '3.8'
+
 services:
   db_api:
-    image: postgres:15
+    image: postgres:13
     container_name: db_api
-    restart: always
-    env_file: .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER_API}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_API}
-      POSTGRES_DB: ${POSTGRES_DB_API}
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=fiscal_stability_db
     ports:
-      - "5434:5432"
+      - "5432:5432"
     volumes:
-      - postgres_api_data:/var/lib/postgresql/data
-    networks:
-      - fiscal_stability_net
+      - postgres_data_api:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U user -d fiscal_stability_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   db_mlflow:
-    image: postgres:15
+    image: postgres:13
     container_name: db_mlflow
-    restart: always
-    env_file: .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER_MLFLOW}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_MLFLOW}
-      POSTGRES_DB: ${POSTGRES_DB_MLFLOW}
+      - POSTGRES_USER=mlflow_user
+      - POSTGRES_PASSWORD=mlflow_password
+      - POSTGRES_DB=mlflow_db
     ports:
-      - "5435:5432"
+      - "5433:5432"
     volumes:
-      - postgres_mlflow_data:/var/lib/postgresql/data
-    networks:
-      - fiscal_stability_net
+      - postgres_data_mlflow:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U mlflow_user -d mlflow_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  api:
+    build: .
+    container_name: fiscal_stability_api
+    depends_on:
+      db_api:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    # ADICIONADO: Define o PYTHONPATH para resolver as importações
+    environment:
+      - PYTHONPATH=/app
+    command: uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
+
   mlflow-server:
-    # Garante que usamos a nossa imagem customizada com o driver psycopg2
     build:
       context: .
       dockerfile: Dockerfile.mlflow
     container_name: mlflow_server
-    restart: always
     depends_on:
       db_mlflow:
         condition: service_healthy
     ports:
       - "5000:5000"
-    env_file: .env
-    networks:
-      - fiscal_stability_net
-    command: >
-      mlflow server
-      --backend-store-uri postgresql://${POSTGRES_USER_MLFLOW}:${POSTGRES_PASSWORD_MLFLOW}@db_mlflow:5432/${POSTGRES_DB_MLFLOW}
-      --default-artifact-root /mlruns_data
-      --host 0.0.0.0
-    volumes:
-      - mlflow_data:/mlruns_data
-
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: fiscal_stability_api
-    restart: always
-    depends_on:
-      db_api:
-        condition: service_healthy
-      mlflow-server:
-        condition: service_started
-    ports:
-      - "8000:8000"
-    env_file: .env
     environment:
-      # CORREÇÃO FINAL: Adicionado "+asyncpg" para instruir a SQLAlchemy a usar o driver assíncrono.
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER_API}:${POSTGRES_PASSWORD_API}@db_api:5432/${POSTGRES_DB_API}
-    networks:
-      - fiscal_stability_net
-    command: ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000"]
+      - DATABASE_URL=postgresql://mlflow_user:mlflow_password@db_mlflow:5432/mlflow_db
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri $$DATABASE_URL --default-artifact-root /mlruns
 
   dashboard:
     build:
       context: .
       dockerfile: Dockerfile.dashboard
     container_name: fiscal_stability_dashboard
-    restart: always
-    depends_on:
-      - api
     ports:
-      - "8050:8050"
-    env_file: .env
+      - "8501:8501"
+    volumes:
+      - .:/app
+    # ADICIONADO: Define o PYTHONPATH para resolver as importações
     environment:
-      - API_URL=http://api:8000
-    networks:
-      - fiscal_stability_net
+      - PYTHONPATH=/app
+    command: streamlit run dashboard.py
 
 volumes:
-  postgres_api_data:
-  postgres_mlflow_data:
-  mlflow_data:
+  postgres_data_api:
+  postgres_data_mlflow:
 
-networks:
-  fiscal_stability_net:
-    driver: bridge
