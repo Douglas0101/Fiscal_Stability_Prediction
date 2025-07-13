@@ -1,4 +1,4 @@
-# CORREÇÃO: Atualizado para Python 3.10 para suportar a sintaxe de tipos moderna.
+# CORREÇÃO: Atualizado para Python 3.10 para consistência e compatibilidade.
 FROM python:3.10-slim as builder
 
 WORKDIR /app
@@ -31,4 +31,6 @@ RUN pip install --no-cache /wheels/*
 
 COPY . .
 
-EXPOSE 8000
+EXPOSE 8050
+
+CMD ["streamlit", "run", "dashboard.py", "--server.port=8050", "--server.address=0.0.0.0"]

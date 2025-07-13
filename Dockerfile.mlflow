@@ -1,0 +1,5 @@
+# Use the official MLflow image as a base
+FROM ghcr.io/mlflow/mlflow:latest
+
+# Install the psycopg2 driver for PostgreSQL connectivity
+RUN pip install --no-cache-dir psycopg2-binary

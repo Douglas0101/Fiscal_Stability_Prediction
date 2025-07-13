@@ -1,105 +1,111 @@
-# docker-compose.yml (Versão Final e Definitiva)
 services:
-  db-api:
-    image: postgres:15-alpine
-    container_name: db-api
+  db_api:
+    image: postgres:15
+    container_name: db_api
+    restart: always
+    env_file: .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER_API}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_API}
       POSTGRES_DB: ${POSTGRES_DB_API}
-    volumes:
-      - api_db_data:/var/lib/postgresql/data
-    networks:
-      - fiscal-net
     ports:
-      - "5433:5432"
+      - "5434:5432"
+    volumes:
+      - postgres_api_data:/var/lib/postgresql/data
+    networks:
+      - fiscal_stability_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_API} -d ${POSTGRES_DB_API}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
 
-  db-mlflow:
-    image: postgres:15-alpine
-    container_name: db-mlflow
+  db_mlflow:
+    image: postgres:15
+    container_name: db_mlflow
+    restart: always
+    env_file: .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER_MLFLOW}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_MLFLOW}
       POSTGRES_DB: ${POSTGRES_DB_MLFLOW}
-    volumes:
-      - mlflow_db_data:/var/lib/postgresql/data
-    networks:
-      - fiscal-net
     ports:
-      - "5432:5432"
+      - "5435:5432"
+    volumes:
+      - postgres_mlflow_data:/var/lib/postgresql/data
+    networks:
+      - fiscal_stability_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_MLFLOW} -d ${POSTGRES_DB_MLFLOW}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
 
   mlflow-server:
+    # Garante que usamos a nossa imagem customizada com o driver psycopg2
     build:
-      context: ./mlflow_docker
-    container_name: mlflow-server
-    env_file:
-      - .env
-    environment:
-      - MLFLOW_TRACKING_URI=postgresql://${POSTGRES_USER_MLFLOW}:${POSTGRES_PASSWORD_MLFLOW}@db-mlflow:5432/${POSTGRES_DB_MLFLOW}
-      - MLFLOW_ARTIFACT_URI=/mlruns_data
-    command: >
-      sh -c "
-        echo 'Atualizando o banco de dados MLflow...' &&
-        mlflow db upgrade postgresql://${POSTGRES_USER_MLFLOW}:${POSTGRES_PASSWORD_MLFLOW}@db-mlflow:5432/${POSTGRES_DB_MLFLOW} &&
-        echo 'Iniciando o servidor MLflow...' &&
-        gunicorn --bind 0.0.0.0:5000 mlflow.server:app
-      "
+      context: .
+      dockerfile: Dockerfile.mlflow
+    container_name: mlflow_server
+    restart: always
+    depends_on:
+      db_mlflow:
+        condition: service_healthy
     ports:
       - "5000:5000"
+    env_file: .env
     networks:
-      - fiscal-net
+      - fiscal_stability_net
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://${POSTGRES_USER_MLFLOW}:${POSTGRES_PASSWORD_MLFLOW}@db_mlflow:5432/${POSTGRES_DB_MLFLOW}
+      --default-artifact-root /mlruns_data
+      --host 0.0.0.0
     volumes:
-      - mlflow_artifacts:/mlruns_data
-    depends_on:
-      db-mlflow:
-        condition: service_healthy
-    # --- CORREÇÃO: Healthcheck RESTAURADO ---
-    # Isto é essencial para a condição 'service_healthy' da API funcionar.
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://127.0.0.1:5000/health || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 20s
+      - mlflow_data:/mlruns_data
 
   api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: api
-    env_file:
-      - .env
-    command: uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload --reload-dir src
-    ports:
-      - "8000:8000"
-    networks:
-      - fiscal-net
-    volumes:
-      - ./src:/app/src
-      - ./data:/app/data
+    container_name: fiscal_stability_api
+    restart: always
     depends_on:
-      db-api:
+      db_api:
         condition: service_healthy
       mlflow-server:
-        condition: service_healthy
+        condition: service_started
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      # CORREÇÃO FINAL: Adicionado "+asyncpg" para instruir a SQLAlchemy a usar o driver assíncrono.
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER_API}:${POSTGRES_PASSWORD_API}@db_api:5432/${POSTGRES_DB_API}
+    networks:
+      - fiscal_stability_net
+    command: ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: fiscal_stability_dashboard
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "8050:8050"
+    env_file: .env
+    environment:
+      - API_URL=http://api:8000
+    networks:
+      - fiscal_stability_net
 
 volumes:
-  api_db_data:
-  mlflow_db_data:
-  mlflow_artifacts:
+  postgres_api_data:
+  postgres_mlflow_data:
+  mlflow_data:
 
 networks:
-  fiscal-net:
+  fiscal_stability_net:
     driver: bridge

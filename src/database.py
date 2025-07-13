@@ -1,52 +1,31 @@
 # src/database.py
 
-import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
-from pydantic_settings import BaseSettings
+import os
 
-# --- 1. Configuração Robusta com Pydantic (Sem alterações) ---
-class DatabaseSettings(BaseSettings):
-    DATABASE_URL: str
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:password@db-api:5432/apidb")
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = 'utf-8'
+engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 
-settings = DatabaseSettings()
-
-# --- 2. Engine e Sessão Assíncronos (Aprimorado) ---
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=False,
-    future=True,
-    # --- APRIMORAMENTO: Configuração explícita do pool de conexões para produção ---
-    pool_size=10,  # Número de conexões a manter abertas no pool.
-    max_overflow=20,  # Conexões extras que podem ser abertas além do pool_size.
-)
-
-AsyncSessionLocal = sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autocommit=False,
-    autoflush=False,
-)
-
-# --- APRIMORAMENTO: Base declarativa para ser usada pelo Alembic para migrações ---
-# O Alembic (ferramenta de migração) usará esta 'Base' para detectar
-# mudanças nos seus modelos (como em 'models.py') e gerar os scripts de migração.
+# Base para os modelos declarativos
 Base = declarative_base()
 
+# Criador de sessão assíncrona
+async_session = sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
+)
 
-# --- 3. Função de Dependência Assíncrona para FastAPI (Sem alterações) ---
+async def create_db_and_tables():
+    """
+    Cria todas as tabelas no banco de dados que herdam de Base.
+    """
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
 async def get_db() -> AsyncSession:
     """
-    Fornece uma sessão de base de dados assíncrona para cada request.
-    Garante que a sessão é sempre fechada corretamente.
+    Função de dependência para obter uma sessão do banco de dados.
     """
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+    async with async_session() as session:
+        yield session

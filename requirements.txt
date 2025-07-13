@@ -2,6 +2,8 @@
 fastapi
 uvicorn[standard]  # Servidor ASGI para FastAPI, com extras para melhor performance
 gunicorn         # Servidor WSGI de produção, uma alternativa robusta
+asyncpg
+streamlit
 
 # --- Machine Learning: Treino e Inferência ---
 mlflow             # Plataforma central de MLOps
@@ -27,6 +29,8 @@ python-jose        # Para manipulação de tokens JWT
 pydantic           # Validação de dados (usado pelo FastAPI)
 pydantic-settings  # Para carregar configurações a partir de variáveis de ambiente
 python-dotenv      # Para carregar o ficheiro .env
+psycopg2-binary
+asyncpg
 
 # --- Visualização (Necessária para o Treino) ---
 matplotlib         # Usado pelo train.py para gerar e salvar os gráficos do SHAP
