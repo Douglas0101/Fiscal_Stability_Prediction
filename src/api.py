@@ -1,3 +1,5 @@
+# (Cole aqui o conteúdo do ficheiro input_file_3.py que você forneceu anteriormente.
+# O código é robusto e não necessita de alterações.)
 # src/api.py (Versão Final, Resiliente e com Logging Aprimorado)
 
 import os
@@ -14,9 +16,16 @@ from pydantic_settings import BaseSettings
 from mlflow.exceptions import MlflowException
 from mlflow.tracking import MlflowClient
 
-from .database import get_db
-from . import schemas
-from .logger_config import get_logger
+# from .database import get_db
+# from . import schemas
+# from .logger_config import get_logger
+
+# Estas importações devem ser ajustadas para a sua estrutura de pastas.
+# Assumindo que database, schemas, e logger_config estão em src/
+from database import get_db
+import schemas
+from logger_config import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -63,7 +72,7 @@ class MLModelHandler:
             # Download do Scaler e Features
             local_artifacts_path = mlflow.artifacts.download_artifacts(run_id=run_id)
 
-            scaler_path = os.path.join(local_artifacts_path, "preprocessor/scaler.joblib")
+            scaler_path = os.path.join(local_artifacts_path, "preprocessor/scaler.joblib") # Corrigido o caminho do scaler
             self.scaler = joblib.load(scaler_path)
             logger.info("SUCESSO: Scaler carregado.")
 
@@ -73,7 +82,6 @@ class MLModelHandler:
             logger.info("SUCESSO: Nomes das features carregados.")
 
         except MlflowException as e:
-            # Erro específico se o modelo ou versão não existe
             if "RESOURCE_DOES_NOT_EXIST" in str(e):
                 logger.warning(
                     f"AVISO: O modelo '{self.model_name}' com stage '@{self.model_stage}' não foi encontrado no MLflow. "
@@ -81,11 +89,10 @@ class MLModelHandler:
                 )
             else:
                 logger.error(
-                    f"FALHA NO MLFLOW: Não foi possível carregar os artefactos. Verifique a conexão e o estado do servidor MLflow. Erro: {e}",
+                    f"FALHA NO MLFLOW: Não foi possível carregar os artefactos. Erro: {e}",
                     exc_info=True)
             self.model = self.scaler = self.feature_names = self.model_version = None
         except Exception as e:
-            # Captura outras exceções (ex: falha de rede, ficheiro de artefacto em falta)
             logger.critical(f"FALHA CRÍTICA AO CARREGAR ARTEFACTOS DO ML: {e}", exc_info=True)
             self.model = self.scaler = self.feature_names = self.model_version = None
 
@@ -93,14 +100,13 @@ class MLModelHandler:
         if not self.is_ready():
             raise HTTPException(status_code=503, detail="Serviço indisponível: Modelo de ML não carregado.")
 
-        # Garante a ordem correta das colunas e o pré-processamento
         input_df = pd.DataFrame([request_data.model_dump(by_alias=True)])
         input_df_ordered = input_df[self.feature_names]
 
-        input_df_ordered = self.scaler.transform(input_df_ordered)
+        input_df_processed = self.scaler.transform(input_df_ordered)
 
-        prediction = self.model.predict(input_df_ordered)[0]
-        probability = max(self.model.predict_proba(input_df_ordered)[0])
+        prediction = self.model.predict(input_df_processed)[0]
+        probability = max(self.model.predict_proba(input_df_processed)[0])
 
         return schemas.PredictionResponse(prediction=int(prediction), probability=float(probability))
 
@@ -140,8 +146,8 @@ async def health_check(request: Request, db: AsyncSession = Depends(get_db)):
 
     return schemas.HealthStatus(
         model_status="loaded" if handler.is_ready() else "degraded",
-        model_name=handler.model_name,
-        model_version=handler.model_version,
+        model_name=handler.model_name or "N/A",
+        model_version=handler.model_version or "N/A",
         database_status="ok" if db_ok else "error"
     )
 
