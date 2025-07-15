@@ -7,13 +7,12 @@ services:
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=fiscal_stability_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data_api:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d fiscal_stability_db"]
+      test: ["CMD-SHELL", "pg_isready -U user"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -45,7 +44,6 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
-    # ADICIONADO: Define o PYTHONPATH para resolver as importações
     environment:
       - PYTHONPATH=/app
     command: uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
@@ -66,19 +64,23 @@ services:
 
   dashboard:
     build:
-      context: .
-      dockerfile: Dockerfile.dashboard
-    container_name: fiscal_stability_dashboard
+      # CORRIGIDO: Aponta para o diretório do projeto frontend.
+      context: ./fiscal-dashboard
+      dockerfile: Dockerfile.dev # Usa um Dockerfile específico para desenvolvimento
+    container_name: fiscal_stability_dashboard_react
     ports:
-      - "8501:8501"
+      # CORRIGIDO: Mapeia a porta do Vite (5173) para a porta 8501 do seu computador.
+      - "8501:5173"
+    depends_on:
+      - api
+    # O volume permite que as alterações no seu código local sejam refletidas no contentor.
     volumes:
-      - .:/app
-    # ADICIONADO: Define o PYTHONPATH para resolver as importações
+      - ./fiscal-dashboard:/app
+      - /app/node_modules # Impede que o node_modules local sobrescreva o do contentor
+    # Define a variável de ambiente para que o dashboard saiba onde encontrar a API.
     environment:
-      - PYTHONPATH=/app
-    command: streamlit run dashboard.py
+      - VITE_API_BASE_URL=http://api:8000
 
 volumes:
   postgres_data_api:
   postgres_data_mlflow:
-
