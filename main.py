@@ -1,12 +1,10 @@
+# main.py
 import subprocess
 import time
-import os
 
-# CORRIGIDO: Importa a função 'get_logger' e a configuração
 from src.logger_config import get_logger
 from src.config import AppConfig
 
-# CORRIGIDO: Obtém uma instância do logger específica para este ficheiro
 logger = get_logger(__name__)
 
 
@@ -16,7 +14,6 @@ def run_command(command, service_name):
     try:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding='utf-8')
 
-        # Log em tempo real
         for line in process.stdout:
             logger.info(f"[{service_name}] {line.strip()}")
         for line in process.stderr:
@@ -31,9 +28,6 @@ def run_command(command, service_name):
             logger.error(f"Erro ao executar comando para '{service_name}'. Código de saída: {process.returncode}")
             return False
 
-    except FileNotFoundError:
-        logger.error(f"Comando não encontrado. Certifica-te que 'docker-compose' está instalado e no PATH do sistema.")
-        return False
     except Exception as e:
         logger.error(f"Uma excepção ocorreu ao executar o comando para '{service_name}': {e}")
         return False
@@ -58,21 +52,22 @@ def main():
         logger.critical("Falha no pipeline de processamento de dados. A abortar o pipeline.")
         return
 
-    logger.info("--- A iniciar o pipeline de treino do modelo ---")
-    model_to_train = config.default_model
-    if not run_command(["docker-compose", "exec", "api", "python", config.train_script_path, model_to_train],
-                       "model-training"):
-        logger.critical("Falha no pipeline de treino do modelo. A abortar o pipeline.")
-        return
+    logger.info(f"--- A iniciar o treino para os modelos: {config.models_to_run} ---")
+    for model_name in config.models_to_run:
+        logger.info(f"--- A treinar o modelo: {model_name} ---")
+        train_command = ["docker-compose", "exec", "api", "python", config.train_script_path, model_name]
+        if not run_command(train_command, f"model-training-{model_name}"):
+            logger.error(f"Falha no treino do modelo {model_name}. A continuar com os próximos...")
 
-    logger.info("--- A reiniciar o serviço da API para carregar o modelo treinado ---")
+    logger.info("--- A reiniciar o serviço da API para carregar os modelos treinados ---")
     if not run_command(["docker-compose", "restart", "api"], "api-restart"):
         logger.critical("Falha ao reiniciar a API.")
         return
 
     logger.info("--- PIPELINE DE ML CONCLUÍDO COM SUCESSO! ---")
-    logger.info(f"API disponível em http://localhost:{config.api_port}/docs")
-    logger.info(f"MLflow UI disponível em http://localhost:{config.mlflow_port}")
+    logger.info(f"Dashboard disponível em http://localhost:8501")
+    logger.info(f"API disponível em http://localhost:8000/docs")
+    logger.info(f"MLflow UI disponível em http://localhost:5000")
 
 
 if __name__ == "__main__":
