@@ -36,10 +36,13 @@ def run_command(command, service_name):
 def main():
     """Orquestrador principal para o pipeline de ML."""
     config = AppConfig()
+    
+    env_file_args = ["--env-file", ".env"]
 
     logger.info("--- INICIANDO ORQUESTRADOR DO PIPELINE DE ML ---")
 
-    if not run_command(["docker-compose", "up", "-d", "--build"], "docker-compose up"):
+    docker_compose_up_command = ["docker-compose"] + env_file_args + ["up", "-d", "--build"]
+    if not run_command(docker_compose_up_command, "docker-compose up"):
         logger.critical("Falha ao iniciar os serviços Docker. A abortar o pipeline.")
         return
 
@@ -47,7 +50,8 @@ def main():
     time.sleep(15)
 
     logger.info("--- A iniciar o pipeline de processamento de dados ---")
-    if not run_command(["docker-compose", "exec", "api", "python", config.data_processing_script_path],
+    data_processing_command = ["docker-compose"] + env_file_args + ["exec", "api", "python", config.data_processing_script_path]
+    if not run_command(data_processing_command,
                        "data-processing"):
         logger.critical("Falha no pipeline de processamento de dados. A abortar o pipeline.")
         return
@@ -55,12 +59,13 @@ def main():
     logger.info(f"--- A iniciar o treino para os modelos: {config.models_to_run} ---")
     for model_name in config.models_to_run:
         logger.info(f"--- A treinar o modelo: {model_name} ---")
-        train_command = ["docker-compose", "exec", "api", "python", config.train_script_path, model_name]
+        train_command = ["docker-compose"] + env_file_args + ["exec", "api", "python", config.train_script_path, model_name]
         if not run_command(train_command, f"model-training-{model_name}"):
             logger.error(f"Falha no treino do modelo {model_name}. A continuar com os próximos...")
 
     logger.info("--- A reiniciar o serviço da API para carregar os modelos treinados ---")
-    if not run_command(["docker-compose", "restart", "api"], "api-restart"):
+    restart_command = ["docker-compose"] + env_file_args + ["restart", "api"]
+    if not run_command(restart_command, "api-restart"):
         logger.critical("Falha ao reiniciar a API.")
         return
 

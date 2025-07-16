@@ -1,18 +1,17 @@
-version: '3.8'
-
 services:
   db_api:
     image: postgres:13
     container_name: db_api
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=${POSTGRES_USER_API}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_API}
+      - POSTGRES_DB=${POSTGRES_DB_API}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data_api:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_API} -d ${POSTGRES_DB_API}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,15 +20,15 @@ services:
     image: postgres:13
     container_name: db_mlflow
     environment:
-      - POSTGRES_USER=mlflow_user
-      - POSTGRES_PASSWORD=mlflow_password
-      - POSTGRES_DB=mlflow_db
+      - POSTGRES_USER=${POSTGRES_USER_MLFLOW}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_MLFLOW}
+      - POSTGRES_DB=${POSTGRES_DB_MLFLOW}
     ports:
       - "5433:5432"
     volumes:
       - postgres_data_mlflow:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mlflow_user -d mlflow_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_MLFLOW} -d ${POSTGRES_DB_MLFLOW}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -46,6 +45,8 @@ services:
       - .:/app
     environment:
       - PYTHONPATH=/app
+      - DATABASE_URL=postgresql://${POSTGRES_USER_API}:${POSTGRES_PASSWORD_API}@db_api:5432/${POSTGRES_DB_API}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
     command: uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
 
   mlflow-server:
@@ -59,27 +60,18 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - DATABASE_URL=postgresql://mlflow_user:mlflow_password@db_mlflow:5432/mlflow_db
+      - DATABASE_URL=postgresql://${POSTGRES_USER_MLFLOW}:${POSTGRES_PASSWORD_MLFLOW}@db_mlflow:5432/${POSTGRES_DB_MLFLOW}
     command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri $$DATABASE_URL --default-artifact-root /mlruns
 
   dashboard:
     build:
-      # CORRIGIDO: Aponta para o diretório do projeto frontend.
-      context: ./fiscal-dashboard
-      dockerfile: Dockerfile.dev # Usa um Dockerfile específico para desenvolvimento
+      context: ./dashboard-fiscal-stability
+      dockerfile: Dockerfile
     container_name: fiscal_stability_dashboard_react
     ports:
-      # CORRIGIDO: Mapeia a porta do Vite (5173) para a porta 8501 do seu computador.
-      - "8501:5173"
+      - "8501:80"
     depends_on:
       - api
-    # O volume permite que as alterações no seu código local sejam refletidas no contentor.
-    volumes:
-      - ./fiscal-dashboard:/app
-      - /app/node_modules # Impede que o node_modules local sobrescreva o do contentor
-    # Define a variável de ambiente para que o dashboard saiba onde encontrar a API.
-    environment:
-      - VITE_API_BASE_URL=http://api:8000
 
 volumes:
   postgres_data_api:

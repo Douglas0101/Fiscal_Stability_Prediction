@@ -120,7 +120,8 @@ class EBMStrategy(ModelStrategy):
         try:
             global_explanation = model.explain_global()
             explanation_path = os.path.join(temp_dir, "ebm_global_explanation.html")
-            global_explanation.write_html(explanation_path)
+            with open(explanation_path, 'w') as f:
+                f.write(global_explanation._repr_html_())
             mlflow.log_artifact(explanation_path, "ebm_explainability")
         except Exception as e:
             logger.warning(f"Não foi possível gerar a explicação global do EBM: {e}")
@@ -220,15 +221,22 @@ class ArtifactManager:
             start_time = time.time()
             classifier = pipeline.named_steps['classifier']
             X_test_processed = pipeline.named_steps['preprocessor'].transform(X_test)
-            if isinstance(X_test_processed, pd.DataFrame):
-                X_test_processed = X_test_processed.values
-            explainer = shap.Explainer(classifier, X_test_processed)
-            shap_values = explainer(X_test_processed)
+
+            if isinstance(classifier, ExplainableBoostingClassifier):
+                X_test_processed_df = pd.DataFrame(X_test_processed, columns=feature_names)
+                explainer = shap.KernelExplainer(classifier.predict_proba, shap.sample(X_test_processed_df, 50))
+                shap_values = explainer.shap_values(X_test_processed_df)
+                features_for_plot = X_test_processed_df
+            else:
+                explainer = shap.Explainer(classifier, X_test_processed)
+                shap_values = explainer(X_test_processed)
+                features_for_plot = X_test_processed
+
             duration = time.time() - start_time
             logger.info(f"Cálculo SHAP concluído em {duration:.2f} segundos.")
             mlflow.log_metric("shap_calculation_duration_sec", duration)
             plt.figure(figsize=(10, 8))
-            shap.summary_plot(shap_values, features=X_test_processed, feature_names=feature_names, plot_type="bar",
+            shap.summary_plot(shap_values, features=features_for_plot, feature_names=feature_names, plot_type="bar",
                               show=False)
             plt.tight_layout()
             shap_plot_path = os.path.join(temp_dir, "shap_summary_plot.png")
