@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db_api:
     image: postgres:13
@@ -60,26 +58,17 @@ services:
       - "5000:5000"
     environment:
       - DATABASE_URL=postgresql://mlflow_user:mlflow_password@db_mlflow:5432/mlflow_db
-    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri $$DATABASE_URL --default-artifact-root /mlruns
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri $DATABASE_URL --default-artifact-root /mlruns
 
   dashboard:
     build:
-      # CORRIGIDO: Aponta para o diretório do projeto frontend.
-      context: ./fiscal-dashboard
-      dockerfile: Dockerfile.dev # Usa um Dockerfile específico para desenvolvimento
+      context: ./dashboard-fiscal-stability
+      dockerfile: ../Dockerfile.dashboard
     container_name: fiscal_stability_dashboard_react
     ports:
-      # CORRIGIDO: Mapeia a porta do Vite (5173) para a porta 8501 do seu computador.
-      - "8501:5173"
+      - "8501:80"
     depends_on:
       - api
-    # O volume permite que as alterações no seu código local sejam refletidas no contentor.
-    volumes:
-      - ./fiscal-dashboard:/app
-      - /app/node_modules # Impede que o node_modules local sobrescreva o do contentor
-    # Define a variável de ambiente para que o dashboard saiba onde encontrar a API.
-    environment:
-      - VITE_API_BASE_URL=http://api:8000
 
 volumes:
   postgres_data_api:
