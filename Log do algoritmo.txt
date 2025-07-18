@@ -1,159 +1,58 @@
 (rapids-25.08) ~/PycharmProjects/Fiscal_Stability_Prediction git:[master]
-python main.py
-2025-07-17 02:16:42,138 - __main__ - INFO - --- INICIANDO ORQUESTRADOR DO PIPELINE DE ML ---
-2025-07-17 02:16:42,138 - __main__ - INFO - A executar comando para o serviço 'docker-compose up': docker-compose --env-file .env up -d --build
-2025-07-17 02:16:42,298 - __main__ - INFO - [docker-compose up] Compose now can delegate build to bake for better performances
-2025-07-17 02:16:42,298 - __main__ - INFO - [docker-compose up] Just set COMPOSE_BAKE=true
-2025-07-17 02:16:42,341 - __main__ - INFO - [docker-compose up] #0 building with "default" instance using docker driver
-2025-07-17 02:16:42,341 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:42,341 - __main__ - INFO - [docker-compose up] #1 [api internal] load build definition from Dockerfile
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #1 transferring dockerfile: 803B done
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #1 WARN: FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #1 DONE 0.0s
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #2 [mlflow-server internal] load build definition from Dockerfile.mlflow
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #2 transferring dockerfile: 228B done
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #2 DONE 0.0s
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #3 [mlflow-server internal] load metadata for ghcr.io/mlflow/mlflow:latest
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #3 DONE 0.0s
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #4 [mlflow-server internal] load .dockerignore
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #4 transferring context: 500B done
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #4 DONE 0.0s
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #5 [mlflow-server 1/2] FROM ghcr.io/mlflow/mlflow:latest
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #5 DONE 0.0s
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #6 [mlflow-server 2/2] RUN pip install --no-cache-dir psycopg2-binary
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #6 CACHED
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #7 [mlflow-server] exporting to image
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #7 exporting layers done
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #7 writing image sha256:f72b369817ac6667ff1c003eddd6d6d4f2db9a7b8bd744195da6b2721a1636e3 done
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #7 naming to docker.io/library/fiscal_stability_prediction-mlflow-server done
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #7 DONE 0.0s
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #8 [mlflow-server] resolving provenance for metadata file
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #8 DONE 0.0s
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #9 [api internal] load metadata for docker.io/library/python:3.10-slim
-2025-07-17 02:16:43,380 - __main__ - INFO - [docker-compose up] #9 DONE 1.0s
-2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up] #10 [api internal] load .dockerignore
-2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up] #10 transferring context: 500B done
-2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up] #10 DONE 0.0s
-2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up] #11 [api builder 1/5] FROM docker.io/library/python:3.10-slim@sha256:9dd6774a1276178f94b0cc1fb1f0edd980825d0ea7634847af9940b1b6273c13
-2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up] #11 DONE 0.0s
-2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up] #12 [api internal] load build context
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #12 transferring context: 2.45MB 0.7s done
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #12 DONE 0.8s
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #13 [api builder 3/5] RUN apt-get update && apt-get install -y --no-install-recommends     build-essential     libpq-dev     git     && rm -rf /var/lib/apt/lists/*
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #13 CACHED
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #14 [api stage-1 5/7] COPY --from=builder /app/requirements.txt .
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #14 CACHED
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #15 [api builder 5/5] RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #15 CACHED
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #16 [api builder 4/5] COPY requirements.txt .
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #16 CACHED
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #17 [api stage-1 4/7] COPY --from=builder /app/wheels /wheels
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #17 CACHED
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #18 [api builder 2/5] WORKDIR /app
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #18 CACHED
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #19 [api stage-1 3/7] RUN apt-get update && apt-get install -y --no-install-recommends     libpq-dev     && rm -rf /var/lib/apt/lists/*
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #19 CACHED
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #20 [api stage-1 6/7] RUN pip install --no-cache /wheels/*
-2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #20 CACHED
-2025-07-17 02:16:44,373 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:44,374 - __main__ - INFO - [docker-compose up] #21 [api stage-1 7/7] COPY . .
-2025-07-17 02:16:48,697 - __main__ - INFO - [docker-compose up] #21 DONE 4.5s
-2025-07-17 02:16:48,851 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:48,851 - __main__ - INFO - [docker-compose up] #22 [api] exporting to image
-2025-07-17 02:16:48,851 - __main__ - INFO - [docker-compose up] #22 exporting layers
-2025-07-17 02:16:50,135 - __main__ - INFO - [docker-compose up] #22 exporting layers 1.4s done
-2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #22 writing image sha256:b3e0936409940226530afe55aea9882d125cf578bdc56962338fd34ed43cd32a done
-2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #22 naming to docker.io/library/fiscal_stability_prediction-api done
-2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #22 DONE 1.5s
-2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #23 [api] resolving provenance for metadata file
-2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #23 DONE 0.0s
-2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #24 [dashboard internal] load build definition from Dockerfile
-2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #24 transferring dockerfile: 385B done
-2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #24 DONE 0.0s
-2025-07-17 02:16:50,392 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:50,392 - __main__ - INFO - [docker-compose up] #25 [dashboard internal] load metadata for docker.io/library/node:18-alpine
-2025-07-17 02:16:51,136 - __main__ - INFO - [docker-compose up] #25 ...
-2025-07-17 02:16:51,136 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:51,136 - __main__ - INFO - [docker-compose up] #26 [dashboard internal] load metadata for docker.io/library/nginx:1.25.3-alpine
-2025-07-17 02:16:51,136 - __main__ - INFO - [docker-compose up] #26 DONE 0.9s
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #25 [dashboard internal] load metadata for docker.io/library/node:18-alpine
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #25 DONE 0.9s
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #27 [dashboard internal] load .dockerignore
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #27 transferring context: 2B done
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #27 DONE 0.0s
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #28 [dashboard build 1/6] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #28 DONE 0.0s
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #29 [dashboard stage-1 1/3] FROM docker.io/library/nginx:1.25.3-alpine@sha256:f2802c2a9d09c7aa3ace27445dfc5656ff24355da28e7b958074a0111e3fc076
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #29 DONE 0.0s
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #30 [dashboard internal] load build context
-2025-07-17 02:16:51,865 - __main__ - INFO - [docker-compose up] #30 transferring context: 1.76MB 0.5s done
-2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #30 DONE 0.6s
-2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #31 [dashboard build 2/6] WORKDIR /app
-2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #31 CACHED
-2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #32 [dashboard build 3/6] COPY package.json package-lock.json ./
-2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #32 CACHED
-2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #33 [dashboard build 4/6] RUN npm install
-2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #33 CACHED
-2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #34 [dashboard build 5/6] COPY . .
-2025-07-17 02:16:55,415 - __main__ - INFO - [docker-compose up] #34 DONE 3.7s
-2025-07-17 02:16:55,568 - __main__ - INFO - [docker-compose up]
-2025-07-17 02:16:55,568 - __main__ - INFO - [docker-compose up] #35 [dashboard build 6/6] RUN npm run build
-2025-07-17 02:16:55,698 - __main__ - INFO - [docker-compose up] #35 0.280
-2025-07-17 02:16:55,698 - __main__ - INFO - [docker-compose up] #35 0.280 > dashboard-fiscal-stability@0.0.0 build
-2025-07-17 02:16:55,698 - __main__ - INFO - [docker-compose up] #35 0.280 > tsc -b && vite build
-2025-07-17 02:16:55,698 - __main__ - INFO - [docker-compose up] #35 0.280
-2025-07-17 02:16:58,498 - __main__ - INFO - [docker-compose up] #35 3.081 src/components/FiscalStabilityMap.tsx(33,12): error TS2345: Argument of type 'string[]' is not assignable to parameter of type 'Iterable<number>'.
-2025-07-17 02:16:58,498 - __main__ - INFO - [docker-compose up] #35 3.081   The types returned by '[Symbol.iterator]().next(...)' are incompatible between these types.
-2025-07-17 02:16:58,498 - __main__ - INFO - [docker-compose up] #35 3.081     Type 'IteratorResult<string, undefined>' is not assignable to type 'IteratorResult<number, any>'.
-2025-07-17 02:16:58,498 - __main__ - INFO - [docker-compose up] #35 3.081       Type 'IteratorYieldResult<string>' is not assignable to type 'IteratorResult<number, any>'.
-2025-07-17 02:16:58,498 - __main__ - INFO - [docker-compose up] #35 3.081         Type 'IteratorYieldResult<string>' is not assignable to type 'IteratorYieldResult<number>'.
-2025-07-17 02:16:58,498 - __main__ - INFO - [docker-compose up] #35 3.081           Type 'string' is not assignable to type 'number'.
-2025-07-17 02:16:58,648 - __main__ - INFO - [docker-compose up] #35 3.081 src/components/FiscalStabilityMap.tsx(51,23): error TS2322: Type 'string | number' is not assignable to type 'string | undefined'.
-2025-07-17 02:16:58,648 - __main__ - INFO - [docker-compose up] #35 3.081   Type 'number' is not assignable to type 'string'.
-2025-07-17 02:16:58,777 - __main__ - INFO - [docker-compose up] #35 ERROR: process "/bin/sh -c npm run build" did not complete successfully: exit code: 2
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] ------
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] > [dashboard build 6/6] RUN npm run build:
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 0.280 > tsc -b && vite build
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 0.280
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081 src/components/FiscalStabilityMap.tsx(33,12): error TS2345: Argument of type 'string[]' is not assignable to parameter of type 'Iterable<number>'.
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081   The types returned by '[Symbol.iterator]().next(...)' are incompatible between these types.
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081     Type 'IteratorResult<string, undefined>' is not assignable to type 'IteratorResult<number, any>'.
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081       Type 'IteratorYieldResult<string>' is not assignable to type 'IteratorResult<number, any>'.
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081         Type 'IteratorYieldResult<string>' is not assignable to type 'IteratorYieldResult<number>'.
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081           Type 'string' is not assignable to type 'number'.
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081 src/components/FiscalStabilityMap.tsx(51,23): error TS2322: Type 'string | number' is not assignable to type 'string | undefined'.
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081   Type 'number' is not assignable to type 'string'.
-2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] ------
-2025-07-17 02:16:58,800 - __main__ - ERROR - [docker-compose up-ERROR] failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 2
-2025-07-17 02:16:58,800 - __main__ - ERROR - Erro ao executar comando para 'docker-compose up'. Código de saída: 1
-2025-07-17 02:16:58,800 - __main__ - CRITICAL - Falha ao iniciar os serviços Docker. A abortar o pipeline.
+(rapids-25.08) ~/PycharmProjects/Fiscal_Stability_Prediction git:[master]
+python run_pipeline.py xgb
+2025-07-18 19:15:28 - __main__ - INFO - Executando comando: src/create_target.py
+2025-07-18 19:15:29 - __main__ - INFO - Carregando dados de: data/02_processed/processed_data.csv
+2025-07-18 19:15:29 - __main__ - INFO - Criando a variável alvo 'fiscal_stability_index' com base na coluna 'Public Debt (% of GDP)'.
+/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/create_target.py:43: FutureWarning: A value is trying to be set on a copy of a DataFrame or Series through chained assignment using an inplace method.
+The behavior will change in pandas 3.0. This inplace method will never work because the intermediate object on which we are setting values always behaves as a copy.
+
+For example, when doing 'df[col].method(value, inplace=True)', try using 'df.method({col: value}, inplace=True)' or df[col] = df[col].method(value) instead, to perform the operation inplace on the original object.
+
+
+  df[debt_column].fillna(debt_median, inplace=True)
+2025-07-18 19:15:29 - __main__ - INFO - Valores ausentes em 'Public Debt (% of GDP)' preenchidos com a mediana (51.65).
+2025-07-18 19:15:29 - __main__ - INFO - Salvando dados com a coluna alvo em: data/03_final/final_data.csv
+2025-07-18 19:15:29 - __main__ - INFO - Criação da variável alvo concluída com sucesso.
+2025-07-18 19:15:29 - __main__ - INFO - Distribuição da variável alvo:
+fiscal_stability_index
+1    0.949597
+0    0.050403
+Name: proportion, dtype: float64
+2025-07-18 19:15:29 - __main__ - INFO - Comando 'src/create_target.py' concluído com sucesso.
+2025-07-18 19:15:29 - __main__ - INFO - Executando comando: src/train.py --model xgb
+2025-07-18 19:15:32 - __main__ - INFO - Carregando dados de 'data/03_final/final_data.csv'...
+2025-07-18 19:15:32 - __main__ - INFO - Dividindo os dados em treino (80%) e teste (20%)...
+2025-07-18 19:15:32 - __main__ - INFO - Divisão concluída. Treino: 2777 amostras, Teste: 695 amostras.
+2025-07-18 19:15:32 - __main__ - INFO - Aplicando pré-processamento aos dados de treino...
+2025-07-18 19:15:32 - __main__ - INFO - Aplicando SMOTE para rebalancear as classes...
+2025-07-18 19:15:32 - __main__ - INFO - Tamanho do dataset após SMOTE: 5274 amostras.
+2025-07-18 19:15:32 - __main__ - INFO - Calculado 'scale_pos_weight' para o desbalanceamento: 0.05
+2025-07-18 19:15:32 - __main__ - INFO - Iniciando a busca de hiperparâmetros para o modelo XGB...
+Traceback (most recent call last):
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/train.py", line 285, in <module>
+    main()
+    ~~~~^^
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/train.py", line 277, in main
+    trainer.tune_and_train(X_train, y_train)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/PycharmProjects/Fiscal_Stability_Prediction/src/train.py", line 167, in tune_and_train
+    random_search.fit(X_train_resampled, y_train_resampled)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/envs/rapids-25.08/lib/python3.13/site-packages/sklearn/base.py", line 1389, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "/home/douglas-souza/anaconda3/envs/rapids-25.08/lib/python3.13/site-packages/sklearn/model_selection/_search.py", line 933, in fit
+    cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
+                                              ~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/envs/rapids-25.08/lib/python3.13/site-packages/sklearn/base.py", line 1237, in is_classifier
+    return get_tags(estimator).estimator_type == "classifier"
+           ~~~~~~~~^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/envs/rapids-25.08/lib/python3.13/site-packages/sklearn/utils/_tags.py", line 430, in get_tags
+    sklearn_tags_provider[klass] = klass.__sklearn_tags__(estimator)  # type: ignore[attr-defined]
+                                   ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/douglas-souza/anaconda3/envs/rapids-25.08/lib/python3.13/site-packages/sklearn/base.py", line 540, in __sklearn_tags__
+    tags = super().__sklearn_tags__()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'super' object has no attribute '__sklearn_tags__'
+2025-07-18 19:15:32 - __main__ - ERROR - Ocorreu um erro ao executar o script 'src/train.py'.
+2025-07-18 19:15:32 - __main__ - ERROR - Código de saída: 1

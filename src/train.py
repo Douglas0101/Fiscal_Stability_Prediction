@@ -1,341 +1,287 @@
-# src/train.py (Versão Completa, Robusta e Alinhada com a API e o Docker Compose)
+# -*- coding: utf-8 -*-
+"""
+Script de Treino Modular para Classificação Binária de Estabilidade Fiscal.
 
+Este script implementa um pipeline completo de Machine Learning para treinar,
+avaliar e otimizar diferentes modelos de classificação (LGBM, XGBoost, EBM)
+para prever a estabilidade fiscal.
+"""
 import argparse
-import json
 import logging
 import os
-import re
-import tempfile
-import time
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 
 import joblib
 import matplotlib.pyplot as plt
-import mlflow
 import numpy as np
 import pandas as pd
-import requests
-import shap
+from imblearn.over_sampling import SMOTE
 from interpret.glassbox import ExplainableBoostingClassifier
-from pydantic import BaseModel, Field
+from lightgbm import LGBMClassifier
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import classification_report
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import (auc, classification_report, roc_curve)
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 
-try:
-    from logger_config import get_logger
-
-    logger = get_logger(__name__)
-except ImportError:
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    logger = logging.getLogger(__name__)
-
-
-# --- 1. GESTÃO DE CONFIGURAÇÃO ---
-class TrainingConfig(BaseModel):
-    processed_data_path: str = Field(default='data/02_processed/processed_data.csv')
-    test_size: float = Field(default=0.2, gt=0, lt=1)
-    random_state: int = Field(default=42)
-    target_variable: str = Field(default='fiscal_stability_index')
-    categorical_features: List[str] = Field(default=['country_id'])
-    mlflow_experiment_name: str = Field(default='Fiscal Stability Prediction')
-    mlflow_tracking_uri: str = Field(default=os.getenv("MLFLOW_TRACKING_URI", "http://mlflow-server:5000"))
-    compute_shap: bool = Field(default=True, description="Flag para controlar o cálculo SHAP.")
+# --- Configuração do Logging ---
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 
-# --- 2. ABSTRAÇÃO DE DADOS ---
 class DataManager:
-    def __init__(self, config: TrainingConfig):
-        self.config = config
+    """
+    Responsável por carregar, dividir e preparar os dados.
+    """
+
+    def __init__(self, data_path: str, target: str, test_size: float, random_state: int):
+        self.data_path = data_path
+        self.target = target
+        self.test_size = test_size
+        self.random_state = random_state
 
     def load_data(self) -> pd.DataFrame:
-        logger.info(f"A carregar dados de: {self.config.processed_data_path}")
-        if not os.path.exists(self.config.processed_data_path):
-            logger.error(f"Ficheiro de dados não encontrado em: {self.config.processed_data_path}")
-            raise FileNotFoundError(f"Ficheiro de dados não encontrado: {self.config.processed_data_path}")
-        return pd.read_csv(self.config.processed_data_path)
+        """Carrega os dados a partir do caminho especificado e valida a presença da coluna alvo."""
+        logger.info(f"Carregando dados de '{self.data_path}'...")
+        if not os.path.exists(self.data_path):
+            logger.error(f"Arquivo não encontrado em '{self.data_path}'")
+            raise FileNotFoundError(f"Arquivo não encontrado em '{self.data_path}'")
 
-    def get_features_and_target(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
-        logger.info(f"A separar features e a variável alvo '{self.config.target_variable}'.")
-        X = df.drop(columns=[self.config.target_variable])
-        y = df[self.config.target_variable]
-        X.columns = [str(col) for col in X.columns]
-        return X, y
+        df = pd.read_csv(self.data_path)
 
-    def split_data(self, X: pd.DataFrame, y: pd.Series) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-        logger.info(
-            f"A dividir os dados: {1 - self.config.test_size:.0%} para treino, {self.config.test_size:.0%} para teste.")
-        return train_test_split(
+        if self.target not in df.columns:
+            error_msg = (
+                f"A coluna alvo '{self.target}' não foi encontrada no arquivo de dados "
+                f"'{self.data_path}'. Verifique se os scripts de pré-processamento "
+                f"(como create_target.py) foram executados corretamente."
+            )
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        return df
+
+    def split_data(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+        """Divide os dados em conjuntos de treino e teste."""
+        logger.info(f"Dividindo os dados em treino ({1 - self.test_size:.0%}) e teste ({self.test_size:.0%})...")
+        X = df.drop(columns=[self.target])
+        y = df[self.target].astype(int)
+
+        X_train, X_test, y_train, y_test = train_test_split(
             X, y,
-            test_size=self.config.test_size,
-            random_state=self.config.random_state,
+            test_size=self.test_size,
+            random_state=self.random_state,
             stratify=y
         )
+        logger.info(f"Divisão concluída. Treino: {X_train.shape[0]} amostras, Teste: {X_test.shape[0]} amostras.")
+        return X_train, X_test, y_train, y_test
 
 
-# --- 3. PADRÃO STRATEGY PARA MODELOS ---
-class ModelStrategy(ABC):
-    def __init__(self, random_state: int):
+class ModelTrainer:
+    """
+    Orquestra o pipeline de treino, otimização e avaliação do modelo.
+    """
+
+    def __init__(self, model_name: str, config: Dict[str, Any], random_state: int):
+        self.model_name = model_name
+        self.config = config
         self.random_state = random_state
-        self.model = self._create_model()
+        self.pipeline = None
 
-    @abstractmethod
-    def _create_model(self) -> Any:
-        pass
+    def _get_model(self, y_train: pd.Series) -> Any:
+        """Instancia o modelo de classificação com base no nome."""
+        counts = np.bincount(y_train)
+        scale_pos_weight = counts[0] / counts[1] if counts[1] > 0 else 1
+        logger.info(f"Calculado 'scale_pos_weight' para o desbalanceamento: {scale_pos_weight:.2f}")
 
-    @abstractmethod
-    def get_name(self) -> str:
-        pass
-
-    def get_model(self) -> Any:
-        return self.model
-
-    def log_specific_artifacts(self, model: Any, preprocessor: Pipeline, X_test: pd.DataFrame, temp_dir: str):
-        pass
-
-
-class XGBoostStrategy(ModelStrategy):
-    def _create_model(self) -> XGBClassifier:
-        return XGBClassifier(random_state=self.random_state, use_label_encoder=False, eval_metric='logloss')
-
-    def get_name(self) -> str:
-        return "xgb"
-
-
-class EBMStrategy(ModelStrategy):
-    def _create_model(self) -> ExplainableBoostingClassifier:
-        return ExplainableBoostingClassifier(random_state=self.random_state)
-
-    def get_name(self) -> str:
-        return "ebm"
-
-    def log_specific_artifacts(self, model: Any, preprocessor: Pipeline, X_test: pd.DataFrame, temp_dir: str):
-        logger.info("Gerando artefactos de explicabilidade nativos do EBM.")
-        try:
-            global_explanation = model.explain_global()
-            explanation_path = os.path.join(temp_dir, "ebm_global_explanation.html")
-            with open(explanation_path, 'w') as f:
-                f.write(global_explanation._repr_html_())
-            mlflow.log_artifact(explanation_path, "ebm_explainability")
-        except Exception as e:
-            logger.warning(f"Não foi possível gerar a explicação global do EBM: {e}")
-
-
-# --- 4. ABSTRAÇÃO DE TRACKING DE EXPERIMENTOS ---
-class MLflowExperimentTracker:
-    def __init__(self, config: TrainingConfig, max_retries: int = 5, initial_wait_sec: int = 5):
-        self.config = config
-        self._connect_with_retry(max_retries, initial_wait_sec)
-
-    def _connect_with_retry(self, max_retries: int, initial_wait_sec: int):
-        mlflow.set_tracking_uri(self.config.mlflow_tracking_uri)
-        for attempt in range(max_retries):
-            try:
-                mlflow.set_experiment(self.config.mlflow_experiment_name)
-                logger.info(
-                    f"MLflow conectado com sucesso: URI='{self.config.mlflow_tracking_uri}', Experimento='{self.config.mlflow_experiment_name}'")
-                return
-            except (requests.exceptions.ConnectionError, mlflow.exceptions.MlflowException) as e:
-                wait_time = initial_wait_sec * (2 ** attempt)
-                logger.warning(
-                    f"Não foi possível conectar ao MLflow (Tentativa {attempt + 1}/{max_retries}). Tentando novamente em {wait_time} segundos...")
-                time.sleep(wait_time)
-        logger.error(f"Não foi possível estabelecer conexão com o MLflow após {max_retries} tentativas.")
-        raise ConnectionError("Falha ao conectar ao servidor MLflow.")
-
-    def start_run(self, run_name: str) -> mlflow.ActiveRun:
-        return mlflow.start_run(run_name=run_name)
-
-    def log_params(self, params: Dict[str, Any]):
-        mlflow.log_params(params)
-
-    def log_metrics_from_report(self, report: Dict[str, Any]):
-        accuracy = report.pop('accuracy', 0.0)
-        mlflow.log_metric("accuracy", accuracy)
-        for class_or_avg, metrics in report.items():
-            if isinstance(metrics, dict):
-                clean_name = re.sub(r'[^A-Za-z0-9_]+', '', class_or_avg).strip()
-                for metric_name, value in metrics.items():
-                    mlflow.log_metric(f"{clean_name}_{metric_name}", value)
-
-    def log_artifact(self, local_path: str, artifact_path: str):
-        mlflow.log_artifact(local_path, artifact_path)
-
-    def log_model(self, model: Pipeline, model_name: str):
-        mlflow.sklearn.log_model(
-            sk_model=model,
-            artifact_path="model",
-            registered_model_name=model_name
-        )
-
-
-# --- 5. GESTÃO DE ARTEFACTOS ---
-class ArtifactManager:
-    def __init__(self, tracker: MLflowExperimentTracker, config: TrainingConfig):
-        self.tracker = tracker
-        self.config = config
-
-    def save_and_log_artifacts(self, pipeline: Pipeline, model_strategy: ModelStrategy, X_test: pd.DataFrame,
-                               y_test: pd.Series, feature_names: List[str]):
-        report = classification_report(y_test, pipeline.predict(X_test), output_dict=True, zero_division=0)
-        logger.info(f"\n{classification_report(y_test, pipeline.predict(X_test), zero_division=0)}")
-        self.tracker.log_metrics_from_report(report)
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            report_path = os.path.join(temp_dir, "classification_report.json")
-            with open(report_path, 'w') as f:
-                json.dump(report, f, indent=4)
-            self.tracker.log_artifact(report_path, "reports")
-
-            features_path = os.path.join(temp_dir, "feature_names.json")
-            with open(features_path, 'w') as f:
-                json.dump(feature_names, f)
-            self.tracker.log_artifact(features_path, "features")
-
-            if self.config.compute_shap:
-                self._log_shap_plot(pipeline, X_test, feature_names, temp_dir)
-            else:
-                logger.info("Cálculo de SHAP desativado. Pulando esta etapa.")
-
-            model_strategy.log_specific_artifacts(
-                pipeline.named_steps['classifier'],
-                pipeline.named_steps['preprocessor'],
-                X_test,
-                temp_dir
+        if self.model_name == 'lgbm':
+            return LGBMClassifier(
+                random_state=self.random_state,
+                scale_pos_weight=scale_pos_weight,
+                n_jobs=-1
             )
+        elif self.model_name == 'xgb':
+            return XGBClassifier(
+                random_state=self.random_state,
+                scale_pos_weight=scale_pos_weight,
+                use_label_encoder=False,
+                eval_metric='logloss',
+                n_jobs=-1
+            )
+        elif self.model_name == 'ebm':
+            return ExplainableBoostingClassifier(random_state=self.random_state, n_jobs=-1)
+        else:
+            raise ValueError(f"Modelo '{self.model_name}' não suportado.")
 
-            model_name = f"fiscal-stability-{model_strategy.get_name()}"
-            logger.info(f"Registando o pipeline completo como o modelo '{model_name}' no MLflow...")
-            self.tracker.log_model(pipeline, model_name)
-            logger.info(f"Modelo '{model_name}' registado com sucesso.")
+    def tune_and_train(self, X_train: pd.DataFrame, y_train: pd.Series):
+        """
+        Aplica pré-processamento, SMOTE, e depois treina o modelo com busca de hiperparâmetros.
+        """
+        numeric_features = self.config['features']['numeric']
 
-    def _log_shap_plot(self, pipeline: Pipeline, X_test: pd.DataFrame, feature_names: List[str], temp_dir: str):
-        try:
-            logger.info("Iniciando cálculo de explicabilidade (SHAP)...")
-            start_time = time.time()
-            classifier = pipeline.named_steps['classifier']
-            X_test_processed = pipeline.named_steps['preprocessor'].transform(X_test)
-
-            if isinstance(classifier, ExplainableBoostingClassifier):
-                X_test_processed_df = pd.DataFrame(X_test_processed, columns=feature_names)
-                explainer = shap.KernelExplainer(classifier.predict_proba, shap.sample(X_test_processed_df, 50))
-                shap_values = explainer.shap_values(X_test_processed_df)
-                features_for_plot = X_test_processed_df
-            else:
-                explainer = shap.Explainer(classifier, X_test_processed)
-                shap_values = explainer(X_test_processed)
-                features_for_plot = X_test_processed
-
-            duration = time.time() - start_time
-            logger.info(f"Cálculo SHAP concluído em {duration:.2f} segundos.")
-            mlflow.log_metric("shap_calculation_duration_sec", duration)
-            plt.figure(figsize=(10, 8))
-            shap.summary_plot(shap_values, features=features_for_plot, feature_names=feature_names, plot_type="bar",
-                              show=False)
-            plt.tight_layout()
-            shap_plot_path = os.path.join(temp_dir, "shap_summary_plot.png")
-            plt.savefig(shap_plot_path, bbox_inches='tight')
-            plt.close()
-            self.tracker.log_artifact(shap_plot_path, "feature_importance")
-        except Exception as e:
-            logger.warning(f"Não foi possível gerar o gráfico SHAP. Erro: {e}", exc_info=True)
-
-
-# --- 6. ORQUESTRAÇÃO DO TREINO ---
-class TrainingOrchestrator:
-    def __init__(self, data_manager: DataManager, model_strategy: ModelStrategy, tracker: MLflowExperimentTracker,
-                 artifact_manager: ArtifactManager):
-        self.data_manager = data_manager
-        self.model_strategy = model_strategy
-        self.tracker = tracker
-        self.artifact_manager = artifact_manager
-
-    def run(self):
-        logger.info("--- INICIANDO PIPELINE DE TREINO ---")
-        t0 = time.time()
-        df = self.data_manager.load_data()
-        X, y = self.data_manager.get_features_and_target(df)
-        X_train, X_test, y_train, y_test = self.data_manager.split_data(X, y)
-
-        # --- INÍCIO DA CORREÇÃO ---
-        numeric_features = X.select_dtypes(include=np.number).columns.tolist()
-
-        numeric_transformer = Pipeline(steps=[
-            ('imputer', SimpleImputer(strategy='median')),
-            ('scaler', StandardScaler())
-        ])
-
-        # Aplica o transformador numérico e descarta as outras colunas (ex: country_id)
+        # 1. Define o pré-processador
         preprocessor = ColumnTransformer(
             transformers=[
-                ('num', numeric_transformer, numeric_features)
+                ('num', Pipeline(steps=[
+                    ('imputer', SimpleImputer(strategy='median')),
+                    ('scaler', StandardScaler())
+                ]), numeric_features)
             ],
-            remainder='drop'  # A chave da correção: descarta colunas não especificadas
+            remainder='drop'
         )
-        # --- FIM DA CORREÇÃO ---
 
-        full_pipeline = Pipeline(steps=[
+        # 2. Aplica o pré-processamento aos dados de treino
+        logger.info("Aplicando pré-processamento aos dados de treino...")
+        X_train_processed = preprocessor.fit_transform(X_train)
+
+        # 3. Aplica SMOTE para rebalancear os dados de treino *após* o pré-processamento
+        logger.info("Aplicando SMOTE para rebalancear as classes...")
+        smote = SMOTE(random_state=self.random_state)
+        X_train_resampled, y_train_resampled = smote.fit_resample(X_train_processed, y_train)
+        logger.info(f"Tamanho do dataset após SMOTE: {X_train_resampled.shape[0]} amostras.")
+
+        # 4. Define o modelo e o pipeline final (sem SMOTE, pois já foi aplicado)
+        model = self._get_model(y_train)  # Passa o y_train original para calcular o peso
+
+        param_grid = self.config['hyperparameters']
+
+        logger.info(f"Iniciando a busca de hiperparâmetros para o modelo {self.model_name.upper()}...")
+
+        random_search = RandomizedSearchCV(
+            estimator=model,
+            param_distributions=param_grid,
+            n_iter=self.config['tuning']['n_iter'],
+            cv=self.config['tuning']['cv'],
+            scoring='roc_auc',
+            n_jobs=-1,
+            random_state=self.random_state,
+            verbose=1
+        )
+
+        # Treina o RandomizedSearchCV com os dados já rebalanceados
+        random_search.fit(X_train_resampled, y_train_resampled)
+
+        logger.info(f"Melhores hiperparâmetros encontrados: {random_search.best_params_}")
+        logger.info(f"Melhor score (AUC-ROC) na validação cruzada: {random_search.best_score_:.4f}")
+
+        # Constrói o pipeline final para inferência (pré-processador + melhor modelo)
+        self.pipeline = Pipeline(steps=[
             ('preprocessor', preprocessor),
-            ('classifier', self.model_strategy.get_model())
+            ('classifier', random_search.best_estimator_)
         ])
 
-        run_name = f"TrainRun_{self.model_strategy.get_name().upper()}_{int(time.time())}"
-        with self.tracker.start_run(run_name):
-            # Log dos parâmetros antes de qualquer outra coisa
-            self.tracker.log_params({
-                "model_strategy": type(self.model_strategy).__name__,
-                "model_name": self.model_strategy.get_name(),
-                "feature_count": len(numeric_features),  # Log apenas das features usadas
-                "training_data_shape": str(X_train.shape),
-                "testing_data_shape": str(X_test.shape),
-                "compute_shap": self.artifact_manager.config.compute_shap
-            })
+    def evaluate(self, X_test: pd.DataFrame, y_test: pd.Series):
+        """Avalia o modelo final no conjunto de teste."""
+        if not self.pipeline:
+            raise RuntimeError("O modelo deve ser treinado antes da avaliação.")
 
-            logger.info(f"Iniciando treino do modelo '{type(self.model_strategy.get_model()).__name__}'...")
-            t1 = time.time()
-            full_pipeline.fit(X_train, y_train)
-            train_duration = time.time() - t1
-            logger.info(f"Treino do modelo concluído em {train_duration:.2f} segundos.")
-            mlflow.log_metric("training_duration_sec", train_duration)
+        logger.info("Avaliando o melhor modelo no conjunto de teste...")
+        y_pred = self.pipeline.predict(X_test)
+        y_proba = self.pipeline.predict_proba(X_test)[:, 1]
 
-            logger.info("Avaliando modelo e guardando artefactos...")
-            t2 = time.time()
-            # Passa apenas as features numéricas para a geração do SHAP
-            self.artifact_manager.save_and_log_artifacts(full_pipeline, self.model_strategy, X_test, y_test,
-                                                         numeric_features)
-            logger.info(f"Gestão de artefactos concluída em {time.time() - t2:.2f} segundos.")
+        logger.info("Relatório de Classificação:\n" + classification_report(y_test, y_pred))
 
-        logger.info(f"--- PIPELINE DE TREINO CONCLUÍDO COM SUCESSO EM {time.time() - t0:.2f} SEGUNDOS ---")
+        self._plot_roc_curve(y_test, y_proba)
+
+    def _plot_roc_curve(self, y_test: pd.Series, y_proba: np.ndarray):
+        """Gera e salva o gráfico da Curva ROC."""
+        fpr, tpr, _ = roc_curve(y_test, y_proba)
+        roc_auc = auc(fpr, tpr)
+
+        plt.figure(figsize=(8, 6))
+        plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'Curva ROC (área = {roc_auc:.2f})')
+        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('Taxa de Falsos Positivos')
+        plt.ylabel('Taxa de Verdadeiros Positivos')
+        plt.title(f'Curva ROC - Modelo {self.model_name.upper()}')
+        plt.legend(loc="lower right")
+
+        output_path = "roc_curve.png"
+        plt.savefig(output_path)
+        logger.info(f"Curva ROC salva em '{output_path}'")
+        plt.close()
+
+    def save_model(self, output_path: str):
+        """Salva o pipeline treinado em um arquivo."""
+        logger.info(f"Salvando o modelo treinado em '{output_path}'...")
+        joblib.dump(self.pipeline, output_path)
+        logger.info("Modelo salvo com sucesso.")
 
 
-# --- 7. PONTO DE ENTRADA DA EXECUÇÃO ---
+def get_model_config() -> Dict[str, Any]:
+    """Retorna as configurações para cada modelo."""
+    numeric_features = [
+        'Inflation (CPI %)', 'GDP Growth (% Annual)', 'Current Account Balance (% GDP)',
+        'Government Revenue (% of GDP)', 'Public Debt (% of GDP)', 'Interest Rate (Real, %)'
+    ]
+
+    return {
+        "features": {"numeric": numeric_features},
+        "tuning": {"n_iter": 15, "cv": 5},
+        "lgbm": {
+            "hyperparameters": {
+                'n_estimators': [100, 200, 300], 'learning_rate': [0.01, 0.05, 0.1],
+                'num_leaves': [20, 31, 40], 'max_depth': [-1, 10, 20],
+                'reg_alpha': [0.1, 0.5], 'reg_lambda': [0.1, 0.5],
+            }
+        },
+        "xgb": {
+            "hyperparameters": {
+                'n_estimators': [100, 200, 300], 'learning_rate': [0.01, 0.05, 0.1],
+                'max_depth': [3, 5, 7], 'gamma': [0, 0.1, 0.5],
+                'subsample': [0.8, 1.0], 'colsample_bytree': [0.8, 1.0],
+            }
+        },
+        "ebm": {
+            # --- CORREÇÃO APLICADA ---
+            # Grade de hiperparâmetros do EBM simplificada para acelerar o treino.
+            "hyperparameters": {
+                'outer_bags': [8, 12],
+                'learning_rate': [0.01, 0.05],
+            }
+        }
+    }
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Treinar e avaliar modelos de previsão de estabilidade fiscal.")
-    parser.add_argument("model_type", type=str, choices=['xgb', 'ebm'],
-                        help="O tipo de modelo a ser treinado ('xgb' ou 'ebm').")
-    parser.add_argument("--no-shap", action="store_true",
-                        help="Desativa o cálculo dos valores SHAP para acelerar o treino.")
+    """Ponto de entrada principal para o script de treino."""
+    parser = argparse.ArgumentParser(
+        description="Script de treino para modelos de classificação de estabilidade fiscal.")
+    parser.add_argument("--model", type=str, choices=['lgbm', 'xgb', 'ebm'], required=True,
+                        help="O tipo de modelo a ser treinado.")
+    parser.add_argument("--data-path", type=str, default="data/03_final/final_data.csv",
+                        help="Caminho para o arquivo de dados processados.")
+    parser.add_argument("--output-model-path", type=str, default="notebooks/models/fiscal_stability_model.joblib",
+                        help="Caminho para salvar o modelo treinado.")
     args = parser.parse_args()
 
-    config = TrainingConfig(compute_shap=not args.no_shap)
-    strategies = {'xgb': XGBoostStrategy, 'ebm': EBMStrategy}
-    strategy_class = strategies.get(args.model_type)
-    if not strategy_class:
-        raise ValueError(f"Estratégia de modelo '{args.model_type}' não suportada.")
+    RANDOM_STATE, TEST_SIZE, TARGET_VARIABLE = 42, 0.2, 'fiscal_stability_index'
 
-    data_manager = DataManager(config)
-    model_strategy = strategy_class(random_state=config.random_state)
-    tracker = MLflowExperimentTracker(config)
-    artifact_manager = ArtifactManager(tracker, config)
-    orchestrator = TrainingOrchestrator(data_manager, model_strategy, tracker, artifact_manager)
-    orchestrator.run()
+    full_config = get_model_config()
+    model_specific_config = {**full_config[args.model],
+                             **{k: v for k, v in full_config.items() if k not in ['lgbm', 'xgb', 'ebm']}}
+
+    data_manager = DataManager(data_path=args.data_path, target=TARGET_VARIABLE, test_size=TEST_SIZE,
+                               random_state=RANDOM_STATE)
+
+    df = data_manager.load_data()
+    X_train, X_test, y_train, y_test = data_manager.split_data(df)
+
+    trainer = ModelTrainer(model_name=args.model, config=model_specific_config, random_state=RANDOM_STATE)
+
+    trainer.tune_and_train(X_train, y_train)
+    trainer.evaluate(X_test, y_test)
+    trainer.save_model(args.output_model_path)
+
+    logger.info("Pipeline de treino concluído com sucesso!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
