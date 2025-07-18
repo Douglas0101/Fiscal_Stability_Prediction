@@ -1,212 +1,159 @@
-(base) ~/PycharmProjects/Fiscal_Stability_Prediction git:[master]
+(rapids-25.08) ~/PycharmProjects/Fiscal_Stability_Prediction git:[master]
 python main.py
-2025-07-15 23:21:04,363 - __main__ - INFO - --- INICIANDO ORQUESTRADOR DO PIPELINE DE ML ---
-2025-07-15 23:21:04,363 - __main__ - INFO - A executar comando para o serviço 'docker-compose up': docker-compose up -d --build
-2025-07-15 23:21:05,348 - __main__ - INFO - [docker-compose up] Compose now can delegate build to bake for better performances
-2025-07-15 23:21:05,348 - __main__ - INFO - [docker-compose up] Just set COMPOSE_BAKE=true
-2025-07-15 23:21:05,741 - __main__ - INFO - [docker-compose up] #0 building with "default" instance using docker driver
-2025-07-15 23:21:05,741 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:05,741 - __main__ - INFO - [docker-compose up] #1 [api internal] load build definition from Dockerfile
-2025-07-15 23:21:05,741 - __main__ - INFO - [docker-compose up] #1 transferring dockerfile: 801B done
-2025-07-15 23:21:05,741 - __main__ - INFO - [docker-compose up] #1 WARN: FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
-2025-07-15 23:21:05,741 - __main__ - INFO - [docker-compose up] #1 DONE 0.0s
-2025-07-15 23:21:05,741 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:05,741 - __main__ - INFO - [docker-compose up] #2 [mlflow-server internal] load build definition from Dockerfile.mlflow
-2025-07-15 23:21:05,741 - __main__ - INFO - [docker-compose up] #2 transferring dockerfile: 228B done
-2025-07-15 23:21:05,741 - __main__ - INFO - [docker-compose up] #2 DONE 0.0s
-2025-07-15 23:21:05,741 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:05,741 - __main__ - INFO - [docker-compose up] #3 [mlflow-server internal] load metadata for ghcr.io/mlflow/mlflow:latest
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #3 DONE 0.0s
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #4 [mlflow-server internal] load .dockerignore
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #4 transferring context: 500B done
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #4 DONE 0.0s
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #5 [mlflow-server 1/2] FROM ghcr.io/mlflow/mlflow:latest
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #5 DONE 0.0s
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #6 [mlflow-server 2/2] RUN pip install --no-cache-dir psycopg2-binary
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #6 CACHED
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #7 [mlflow-server] exporting to image
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #7 exporting layers done
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #7 writing image sha256:f72b369817ac6667ff1c003eddd6d6d4f2db9a7b8bd744195da6b2721a1636e3 done
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #7 naming to docker.io/library/fiscal_stability_prediction-mlflow-server done
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #7 DONE 0.0s
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #8 [mlflow-server] resolving provenance for metadata file
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] #8 DONE 0.0s
-2025-07-15 23:21:05,742 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:05,743 - __main__ - INFO - [docker-compose up] #9 [api internal] load metadata for docker.io/library/python:3.10-slim
-2025-07-15 23:21:08,427 - __main__ - INFO - [docker-compose up] #9 DONE 2.9s
-2025-07-15 23:21:08,527 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:08,527 - __main__ - INFO - [docker-compose up] #10 [api internal] load .dockerignore
-2025-07-15 23:21:08,527 - __main__ - INFO - [docker-compose up] #10 transferring context: 500B done
-2025-07-15 23:21:08,527 - __main__ - INFO - [docker-compose up] #10 DONE 0.0s
-2025-07-15 23:21:08,528 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:08,528 - __main__ - INFO - [docker-compose up] #11 [api builder 1/5] FROM docker.io/library/python:3.10-slim@sha256:9dd6774a1276178f94b0cc1fb1f0edd980825d0ea7634847af9940b1b6273c13
-2025-07-15 23:21:08,528 - __main__ - INFO - [docker-compose up] #11 DONE 0.0s
-2025-07-15 23:21:08,528 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:08,528 - __main__ - INFO - [docker-compose up] #12 [api internal] load build context
-2025-07-15 23:21:09,471 - __main__ - INFO - [docker-compose up] #12 transferring context: 2.33MB 0.7s done
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] #12 DONE 0.8s
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] #13 [api builder 4/5] COPY requirements.txt .
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] #13 CACHED
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] #14 [api stage-1 5/7] COPY --from=builder /app/requirements.txt .
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] #14 CACHED
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] #15 [api builder 3/5] RUN apt-get update && apt-get install -y --no-install-recommends     build-essential     libpq-dev     && rm -rf /var/lib/apt/lists/*
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] #15 CACHED
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] #16 [api builder 5/5] RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] #16 CACHED
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] #17 [api stage-1 4/7] COPY --from=builder /app/wheels /wheels
-2025-07-15 23:21:09,472 - __main__ - INFO - [docker-compose up] #17 CACHED
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] #18 [api stage-1 6/7] RUN pip install --no-cache /wheels/*
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] #18 CACHED
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] #19 [api stage-1 3/7] RUN apt-get update && apt-get install -y --no-install-recommends     libpq-dev     && rm -rf /var/lib/apt/lists/*
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] #19 CACHED
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] #20 [api builder 2/5] WORKDIR /app
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] #20 CACHED
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] #21 [api stage-1 7/7] COPY . .
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] #21 CACHED
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] #22 [api] exporting to image
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] #22 exporting layers done
-2025-07-15 23:21:09,473 - __main__ - INFO - [docker-compose up] #22 writing image sha256:796b7e404b548f1ebfc102c1d5bef4e7f0ece17e6ea4a0b2dc5a65ba22e3fe57 done
-2025-07-15 23:21:09,474 - __main__ - INFO - [docker-compose up] #22 naming to docker.io/library/fiscal_stability_prediction-api done
-2025-07-15 23:21:09,474 - __main__ - INFO - [docker-compose up] #22 DONE 0.0s
-2025-07-15 23:21:09,474 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,474 - __main__ - INFO - [docker-compose up] #23 [api] resolving provenance for metadata file
-2025-07-15 23:21:09,474 - __main__ - INFO - [docker-compose up] #23 DONE 0.0s
-2025-07-15 23:21:09,474 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,474 - __main__ - INFO - [docker-compose up] #24 [dashboard internal] load build definition from Dockerfile.dashboard
-2025-07-15 23:21:09,474 - __main__ - INFO - [docker-compose up] #24 transferring dockerfile: 481B done
-2025-07-15 23:21:09,474 - __main__ - INFO - [docker-compose up] #24 DONE 0.0s
-2025-07-15 23:21:09,474 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:09,474 - __main__ - INFO - [docker-compose up] #25 [dashboard internal] load metadata for docker.io/library/nginx:1.25.3-alpine
-2025-07-15 23:21:10,277 - __main__ - INFO - [docker-compose up] #25 DONE 1.0s
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #26 [dashboard internal] load .dockerignore
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #26 transferring context: 2B done
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #26 DONE 0.0s
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #27 [dashboard 1/3] FROM docker.io/library/nginx:1.25.3-alpine@sha256:f2802c2a9d09c7aa3ace27445dfc5656ff24355da28e7b958074a0111e3fc076
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #27 DONE 0.0s
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #28 [dashboard internal] load build context
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #28 transferring context: 32B done
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #28 DONE 0.0s
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #29 [dashboard 2/3] RUN rm /etc/nginx/conf.d/default.conf
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #29 CACHED
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #30 [dashboard 3/3] COPY ./index.html /usr/share/nginx/html/index.html
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #30 CACHED
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #31 [dashboard] exporting to image
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #31 exporting layers done
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #31 writing image sha256:07ebeb1edfd4f990dd48836171a6051e6bcc319bf92628a76f7728fa186c2f75 done
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #31 naming to docker.io/library/fiscal_stability_prediction-dashboard done
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #31 DONE 0.0s
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] 
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #32 [dashboard] resolving provenance for metadata file
-2025-07-15 23:21:10,322 - __main__ - INFO - [docker-compose up] #32 DONE 0.0s
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] time="2025-07-15T23:21:05-03:00" level=warning msg="The \"DATABASE_URL\" variable is not set. Defaulting to a blank string."
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] api  Built
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] dashboard  Built
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] mlflow-server  Built
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container db_mlflow  Created
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container db_api  Created
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container fiscal_stability_api  Created
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container fiscal_stability_dashboard_react  Created
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container mlflow_server  Created
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container db_mlflow  Starting
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container db_api  Starting
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container db_api  Started
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container db_api  Waiting
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container db_mlflow  Started
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container db_mlflow  Waiting
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container db_api  Healthy
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container fiscal_stability_api  Starting
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container db_mlflow  Healthy
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container mlflow_server  Starting
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container mlflow_server  Started
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container fiscal_stability_api  Started
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container fiscal_stability_dashboard_react  Starting
-2025-07-15 23:21:21,714 - __main__ - ERROR - [docker-compose up-ERROR] Container fiscal_stability_dashboard_react  Started
-2025-07-15 23:21:21,714 - __main__ - INFO - Comando para 'docker-compose up' executado com sucesso.
-2025-07-15 23:21:21,714 - __main__ - INFO - Serviços Docker iniciados. A aguardar 15 segundos para a estabilização...
-2025-07-15 23:21:36,715 - __main__ - INFO - --- A iniciar o pipeline de processamento de dados ---
-2025-07-15 23:21:36,715 - __main__ - INFO - A executar comando para o serviço 'data-processing': docker-compose exec api python src/data_processing.py
-2025-07-15 23:21:37,202 - __main__ - INFO - [data-processing] 2025-07-16 02:21:37,202 - __main__ - INFO - --- INICIANDO PIPELINE DE PROCESSAMENTO DE DADOS ---
-2025-07-15 23:21:37,202 - __main__ - INFO - [data-processing] 2025-07-16 02:21:37,202 - __main__ - INFO - A carregar dados brutos de: /app/data/01_raw/world_bank_data_2025.csv
-2025-07-15 23:21:37,223 - __main__ - INFO - [data-processing] 2025-07-16 02:21:37,223 - __main__ - INFO - A carregar dados com o alvo de: /app/data/01_raw/world_bank_data_with_target.csv
-2025-07-15 23:21:37,234 - __main__ - INFO - [data-processing] 2025-07-16 02:21:37,234 - __main__ - INFO - A juntar dados brutos com a coluna-alvo.
-2025-07-15 23:21:37,244 - __main__ - INFO - [data-processing] 2025-07-16 02:21:37,243 - __main__ - INFO - A iniciar a limpeza de dados...
-2025-07-15 23:21:37,245 - __main__ - INFO - [data-processing] 2025-07-16 02:21:37,245 - __main__ - INFO - A salvar dados processados em: /app/data/02_processed/processed_data.csv
-2025-07-15 23:21:37,290 - __main__ - INFO - [data-processing] 2025-07-16 02:21:37,290 - __main__ - INFO - --- PIPELINE DE PROCESSAMENTO DE DADOS CONCLUÍDO ---
-2025-07-15 23:21:37,375 - __main__ - ERROR - [data-processing-ERROR] time="2025-07-15T23:21:36-03:00" level=warning msg="The \"DATABASE_URL\" variable is not set. Defaulting to a blank string."
-2025-07-15 23:21:37,375 - __main__ - INFO - Comando para 'data-processing' executado com sucesso.
-2025-07-15 23:21:37,375 - __main__ - INFO - --- A iniciar o treino para os modelos: ['xgb', 'ebm'] ---
-2025-07-15 23:21:37,375 - __main__ - INFO - --- A treinar o modelo: xgb ---
-2025-07-15 23:21:37,375 - __main__ - INFO - A executar comando para o serviço 'model-training-xgb': docker-compose exec api python src/train.py xgb
-2025-07-15 23:25:47,415 - __main__ - INFO - [model-training-xgb] 2025-07-16 02:25:47,415 - __main__ - WARNING - Não foi possível conectar ao MLflow (Tentativa 1/5). Tentando novamente em 5 segundos...
-2025-07-15 23:29:58,508 - __main__ - INFO - [model-training-xgb] 2025-07-16 02:29:58,508 - __main__ - WARNING - Não foi possível conectar ao MLflow (Tentativa 2/5). Tentando novamente em 10 segundos...
-2025-07-15 23:34:16,351 - __main__ - INFO - [model-training-xgb] 2025-07-16 02:34:16,351 - __main__ - WARNING - Não foi possível conectar ao MLflow (Tentativa 3/5). Tentando novamente em 20 segundos...
-2025-07-15 23:38:42,781 - __main__ - INFO - [model-training-xgb] 2025-07-16 02:38:42,780 - __main__ - WARNING - Não foi possível conectar ao MLflow (Tentativa 4/5). Tentando novamente em 40 segundos...
-2025-07-15 23:43:29,700 - __main__ - INFO - [model-training-xgb] 2025-07-16 02:43:29,700 - __main__ - WARNING - Não foi possível conectar ao MLflow (Tentativa 5/5). Tentando novamente em 80 segundos...
-2025-07-15 23:44:49,780 - __main__ - INFO - [model-training-xgb] 2025-07-16 02:44:49,780 - __main__ - ERROR - Não foi possível estabelecer conexão com o MLflow após 5 tentativas.
-2025-07-15 23:44:50,378 - __main__ - ERROR - [model-training-xgb-ERROR] time="2025-07-15T23:21:37-03:00" level=warning msg="The \"DATABASE_URL\" variable is not set. Defaulting to a blank string."
-2025-07-15 23:44:50,378 - __main__ - ERROR - [model-training-xgb-ERROR] Traceback (most recent call last):
-2025-07-15 23:44:50,378 - __main__ - ERROR - [model-training-xgb-ERROR] File "/app/src/train.py", line 333, in <module>
-2025-07-15 23:44:50,378 - __main__ - ERROR - [model-training-xgb-ERROR] main()
-2025-07-15 23:44:50,378 - __main__ - ERROR - [model-training-xgb-ERROR] File "/app/src/train.py", line 326, in main
-2025-07-15 23:44:50,378 - __main__ - ERROR - [model-training-xgb-ERROR] tracker = MLflowExperimentTracker(config)
-2025-07-15 23:44:50,378 - __main__ - ERROR - [model-training-xgb-ERROR] File "/app/src/train.py", line 133, in __init__
-2025-07-15 23:44:50,378 - __main__ - ERROR - [model-training-xgb-ERROR] self._connect_with_retry(max_retries, initial_wait_sec)
-2025-07-15 23:44:50,378 - __main__ - ERROR - [model-training-xgb-ERROR] File "/app/src/train.py", line 149, in _connect_with_retry
-2025-07-15 23:44:50,378 - __main__ - ERROR - [model-training-xgb-ERROR] raise ConnectionError("Falha ao conectar ao servidor MLflow.")
-2025-07-15 23:44:50,378 - __main__ - ERROR - [model-training-xgb-ERROR] ConnectionError: Falha ao conectar ao servidor MLflow.
-2025-07-15 23:44:50,378 - __main__ - ERROR - [model-training-xgb-ERROR] exit status 1
-2025-07-15 23:44:50,379 - __main__ - ERROR - Erro ao executar comando para 'model-training-xgb'. Código de saída: 1
-2025-07-15 23:44:50,379 - __main__ - ERROR - Falha no treino do modelo xgb. A continuar com os próximos...
-2025-07-15 23:44:50,379 - __main__ - INFO - --- A treinar o modelo: ebm ---
-2025-07-15 23:44:50,379 - __main__ - INFO - A executar comando para o serviço 'model-training-ebm': docker-compose exec api python src/train.py ebm
-2025-07-15 23:48:59,490 - __main__ - INFO - [model-training-ebm] 2025-07-16 02:48:59,489 - __main__ - WARNING - Não foi possível conectar ao MLflow (Tentativa 1/5). Tentando novamente em 5 segundos...
-2025-07-15 23:53:10,939 - __main__ - INFO - [model-training-ebm] 2025-07-16 02:53:10,939 - __main__ - WARNING - Não foi possível conectar ao MLflow (Tentativa 2/5). Tentando novamente em 10 segundos...
-2025-07-15 23:57:27,683 - __main__ - INFO - [model-training-ebm] 2025-07-16 02:57:27,683 - __main__ - WARNING - Não foi possível conectar ao MLflow (Tentativa 3/5). Tentando novamente em 20 segundos...
-2025-07-16 00:01:54,751 - __main__ - INFO - [model-training-ebm] 2025-07-16 03:01:54,749 - __main__ - WARNING - Não foi possível conectar ao MLflow (Tentativa 4/5). Tentando novamente em 40 segundos...
-2025-07-16 00:06:41,243 - __main__ - INFO - [model-training-ebm] 2025-07-16 03:06:41,242 - __main__ - WARNING - Não foi possível conectar ao MLflow (Tentativa 5/5). Tentando novamente em 80 segundos...
-2025-07-16 00:08:01,322 - __main__ - INFO - [model-training-ebm] 2025-07-16 03:08:01,322 - __main__ - ERROR - Não foi possível estabelecer conexão com o MLflow após 5 tentativas.
-2025-07-16 00:08:01,856 - __main__ - ERROR - [model-training-ebm-ERROR] time="2025-07-15T23:44:50-03:00" level=warning msg="The \"DATABASE_URL\" variable is not set. Defaulting to a blank string."
-2025-07-16 00:08:01,856 - __main__ - ERROR - [model-training-ebm-ERROR] Traceback (most recent call last):
-2025-07-16 00:08:01,856 - __main__ - ERROR - [model-training-ebm-ERROR] File "/app/src/train.py", line 333, in <module>
-2025-07-16 00:08:01,856 - __main__ - ERROR - [model-training-ebm-ERROR] main()
-2025-07-16 00:08:01,856 - __main__ - ERROR - [model-training-ebm-ERROR] File "/app/src/train.py", line 326, in main
-2025-07-16 00:08:01,856 - __main__ - ERROR - [model-training-ebm-ERROR] tracker = MLflowExperimentTracker(config)
-2025-07-16 00:08:01,856 - __main__ - ERROR - [model-training-ebm-ERROR] File "/app/src/train.py", line 133, in __init__
-2025-07-16 00:08:01,856 - __main__ - ERROR - [model-training-ebm-ERROR] self._connect_with_retry(max_retries, initial_wait_sec)
-2025-07-16 00:08:01,856 - __main__ - ERROR - [model-training-ebm-ERROR] File "/app/src/train.py", line 149, in _connect_with_retry
-2025-07-16 00:08:01,856 - __main__ - ERROR - [model-training-ebm-ERROR] raise ConnectionError("Falha ao conectar ao servidor MLflow.")
-2025-07-16 00:08:01,857 - __main__ - ERROR - [model-training-ebm-ERROR] ConnectionError: Falha ao conectar ao servidor MLflow.
-2025-07-16 00:08:01,857 - __main__ - ERROR - [model-training-ebm-ERROR] exit status 1
-2025-07-16 00:08:01,857 - __main__ - ERROR - Erro ao executar comando para 'model-training-ebm'. Código de saída: 1
-2025-07-16 00:08:01,857 - __main__ - ERROR - Falha no treino do modelo ebm. A continuar com os próximos...
-2025-07-16 00:08:01,857 - __main__ - INFO - --- A reiniciar o serviço da API para carregar os modelos treinados ---
-2025-07-16 00:08:01,857 - __main__ - INFO - A executar comando para o serviço 'api-restart': docker-compose restart api
-2025-07-16 00:08:02,435 - __main__ - ERROR - [api-restart-ERROR] time="2025-07-16T00:08:01-03:00" level=warning msg="The \"DATABASE_URL\" variable is not set. Defaulting to a blank string."
-2025-07-16 00:08:02,435 - __main__ - ERROR - [api-restart-ERROR] Container fiscal_stability_api  Restarting
-2025-07-16 00:08:02,435 - __main__ - ERROR - [api-restart-ERROR] Container fiscal_stability_api  Started
-2025-07-16 00:08:02,435 - __main__ - INFO - Comando para 'api-restart' executado com sucesso.
-2025-07-16 00:08:02,436 - __main__ - INFO - --- PIPELINE DE ML CONCLUÍDO COM SUCESSO! ---
-2025-07-16 00:08:02,436 - __main__ - INFO - Dashboard disponível em http://localhost:8501
-2025-07-16 00:08:02,436 - __main__ - INFO - API disponível em http://localhost:8000/docs
-2025-07-16 00:08:02,436 - __main__ - INFO - MLflow UI disponível em http://localhost:5000
+2025-07-17 02:16:42,138 - __main__ - INFO - --- INICIANDO ORQUESTRADOR DO PIPELINE DE ML ---
+2025-07-17 02:16:42,138 - __main__ - INFO - A executar comando para o serviço 'docker-compose up': docker-compose --env-file .env up -d --build
+2025-07-17 02:16:42,298 - __main__ - INFO - [docker-compose up] Compose now can delegate build to bake for better performances
+2025-07-17 02:16:42,298 - __main__ - INFO - [docker-compose up] Just set COMPOSE_BAKE=true
+2025-07-17 02:16:42,341 - __main__ - INFO - [docker-compose up] #0 building with "default" instance using docker driver
+2025-07-17 02:16:42,341 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:42,341 - __main__ - INFO - [docker-compose up] #1 [api internal] load build definition from Dockerfile
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #1 transferring dockerfile: 803B done
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #1 WARN: FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #1 DONE 0.0s
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #2 [mlflow-server internal] load build definition from Dockerfile.mlflow
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #2 transferring dockerfile: 228B done
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #2 DONE 0.0s
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #3 [mlflow-server internal] load metadata for ghcr.io/mlflow/mlflow:latest
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #3 DONE 0.0s
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #4 [mlflow-server internal] load .dockerignore
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #4 transferring context: 500B done
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #4 DONE 0.0s
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #5 [mlflow-server 1/2] FROM ghcr.io/mlflow/mlflow:latest
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #5 DONE 0.0s
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #6 [mlflow-server 2/2] RUN pip install --no-cache-dir psycopg2-binary
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #6 CACHED
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #7 [mlflow-server] exporting to image
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #7 exporting layers done
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #7 writing image sha256:f72b369817ac6667ff1c003eddd6d6d4f2db9a7b8bd744195da6b2721a1636e3 done
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #7 naming to docker.io/library/fiscal_stability_prediction-mlflow-server done
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #7 DONE 0.0s
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #8 [mlflow-server] resolving provenance for metadata file
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #8 DONE 0.0s
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:42,536 - __main__ - INFO - [docker-compose up] #9 [api internal] load metadata for docker.io/library/python:3.10-slim
+2025-07-17 02:16:43,380 - __main__ - INFO - [docker-compose up] #9 DONE 1.0s
+2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up] #10 [api internal] load .dockerignore
+2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up] #10 transferring context: 500B done
+2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up] #10 DONE 0.0s
+2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up] #11 [api builder 1/5] FROM docker.io/library/python:3.10-slim@sha256:9dd6774a1276178f94b0cc1fb1f0edd980825d0ea7634847af9940b1b6273c13
+2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up] #11 DONE 0.0s
+2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:43,493 - __main__ - INFO - [docker-compose up] #12 [api internal] load build context
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #12 transferring context: 2.45MB 0.7s done
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #12 DONE 0.8s
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #13 [api builder 3/5] RUN apt-get update && apt-get install -y --no-install-recommends     build-essential     libpq-dev     git     && rm -rf /var/lib/apt/lists/*
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #13 CACHED
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #14 [api stage-1 5/7] COPY --from=builder /app/requirements.txt .
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #14 CACHED
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #15 [api builder 5/5] RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #15 CACHED
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #16 [api builder 4/5] COPY requirements.txt .
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #16 CACHED
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #17 [api stage-1 4/7] COPY --from=builder /app/wheels /wheels
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #17 CACHED
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #18 [api builder 2/5] WORKDIR /app
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #18 CACHED
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #19 [api stage-1 3/7] RUN apt-get update && apt-get install -y --no-install-recommends     libpq-dev     && rm -rf /var/lib/apt/lists/*
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #19 CACHED
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #20 [api stage-1 6/7] RUN pip install --no-cache /wheels/*
+2025-07-17 02:16:44,223 - __main__ - INFO - [docker-compose up] #20 CACHED
+2025-07-17 02:16:44,373 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:44,374 - __main__ - INFO - [docker-compose up] #21 [api stage-1 7/7] COPY . .
+2025-07-17 02:16:48,697 - __main__ - INFO - [docker-compose up] #21 DONE 4.5s
+2025-07-17 02:16:48,851 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:48,851 - __main__ - INFO - [docker-compose up] #22 [api] exporting to image
+2025-07-17 02:16:48,851 - __main__ - INFO - [docker-compose up] #22 exporting layers
+2025-07-17 02:16:50,135 - __main__ - INFO - [docker-compose up] #22 exporting layers 1.4s done
+2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #22 writing image sha256:b3e0936409940226530afe55aea9882d125cf578bdc56962338fd34ed43cd32a done
+2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #22 naming to docker.io/library/fiscal_stability_prediction-api done
+2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #22 DONE 1.5s
+2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #23 [api] resolving provenance for metadata file
+2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #23 DONE 0.0s
+2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #24 [dashboard internal] load build definition from Dockerfile
+2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #24 transferring dockerfile: 385B done
+2025-07-17 02:16:50,240 - __main__ - INFO - [docker-compose up] #24 DONE 0.0s
+2025-07-17 02:16:50,392 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:50,392 - __main__ - INFO - [docker-compose up] #25 [dashboard internal] load metadata for docker.io/library/node:18-alpine
+2025-07-17 02:16:51,136 - __main__ - INFO - [docker-compose up] #25 ...
+2025-07-17 02:16:51,136 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:51,136 - __main__ - INFO - [docker-compose up] #26 [dashboard internal] load metadata for docker.io/library/nginx:1.25.3-alpine
+2025-07-17 02:16:51,136 - __main__ - INFO - [docker-compose up] #26 DONE 0.9s
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #25 [dashboard internal] load metadata for docker.io/library/node:18-alpine
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #25 DONE 0.9s
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #27 [dashboard internal] load .dockerignore
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #27 transferring context: 2B done
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #27 DONE 0.0s
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #28 [dashboard build 1/6] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #28 DONE 0.0s
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #29 [dashboard stage-1 1/3] FROM docker.io/library/nginx:1.25.3-alpine@sha256:f2802c2a9d09c7aa3ace27445dfc5656ff24355da28e7b958074a0111e3fc076
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #29 DONE 0.0s
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:51,247 - __main__ - INFO - [docker-compose up] #30 [dashboard internal] load build context
+2025-07-17 02:16:51,865 - __main__ - INFO - [docker-compose up] #30 transferring context: 1.76MB 0.5s done
+2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #30 DONE 0.6s
+2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #31 [dashboard build 2/6] WORKDIR /app
+2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #31 CACHED
+2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #32 [dashboard build 3/6] COPY package.json package-lock.json ./
+2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #32 CACHED
+2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #33 [dashboard build 4/6] RUN npm install
+2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #33 CACHED
+2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:51,866 - __main__ - INFO - [docker-compose up] #34 [dashboard build 5/6] COPY . .
+2025-07-17 02:16:55,415 - __main__ - INFO - [docker-compose up] #34 DONE 3.7s
+2025-07-17 02:16:55,568 - __main__ - INFO - [docker-compose up]
+2025-07-17 02:16:55,568 - __main__ - INFO - [docker-compose up] #35 [dashboard build 6/6] RUN npm run build
+2025-07-17 02:16:55,698 - __main__ - INFO - [docker-compose up] #35 0.280
+2025-07-17 02:16:55,698 - __main__ - INFO - [docker-compose up] #35 0.280 > dashboard-fiscal-stability@0.0.0 build
+2025-07-17 02:16:55,698 - __main__ - INFO - [docker-compose up] #35 0.280 > tsc -b && vite build
+2025-07-17 02:16:55,698 - __main__ - INFO - [docker-compose up] #35 0.280
+2025-07-17 02:16:58,498 - __main__ - INFO - [docker-compose up] #35 3.081 src/components/FiscalStabilityMap.tsx(33,12): error TS2345: Argument of type 'string[]' is not assignable to parameter of type 'Iterable<number>'.
+2025-07-17 02:16:58,498 - __main__ - INFO - [docker-compose up] #35 3.081   The types returned by '[Symbol.iterator]().next(...)' are incompatible between these types.
+2025-07-17 02:16:58,498 - __main__ - INFO - [docker-compose up] #35 3.081     Type 'IteratorResult<string, undefined>' is not assignable to type 'IteratorResult<number, any>'.
+2025-07-17 02:16:58,498 - __main__ - INFO - [docker-compose up] #35 3.081       Type 'IteratorYieldResult<string>' is not assignable to type 'IteratorResult<number, any>'.
+2025-07-17 02:16:58,498 - __main__ - INFO - [docker-compose up] #35 3.081         Type 'IteratorYieldResult<string>' is not assignable to type 'IteratorYieldResult<number>'.
+2025-07-17 02:16:58,498 - __main__ - INFO - [docker-compose up] #35 3.081           Type 'string' is not assignable to type 'number'.
+2025-07-17 02:16:58,648 - __main__ - INFO - [docker-compose up] #35 3.081 src/components/FiscalStabilityMap.tsx(51,23): error TS2322: Type 'string | number' is not assignable to type 'string | undefined'.
+2025-07-17 02:16:58,648 - __main__ - INFO - [docker-compose up] #35 3.081   Type 'number' is not assignable to type 'string'.
+2025-07-17 02:16:58,777 - __main__ - INFO - [docker-compose up] #35 ERROR: process "/bin/sh -c npm run build" did not complete successfully: exit code: 2
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] ------
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] > [dashboard build 6/6] RUN npm run build:
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 0.280 > tsc -b && vite build
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 0.280
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081 src/components/FiscalStabilityMap.tsx(33,12): error TS2345: Argument of type 'string[]' is not assignable to parameter of type 'Iterable<number>'.
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081   The types returned by '[Symbol.iterator]().next(...)' are incompatible between these types.
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081     Type 'IteratorResult<string, undefined>' is not assignable to type 'IteratorResult<number, any>'.
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081       Type 'IteratorYieldResult<string>' is not assignable to type 'IteratorResult<number, any>'.
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081         Type 'IteratorYieldResult<string>' is not assignable to type 'IteratorYieldResult<number>'.
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081           Type 'string' is not assignable to type 'number'.
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081 src/components/FiscalStabilityMap.tsx(51,23): error TS2322: Type 'string | number' is not assignable to type 'string | undefined'.
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] 3.081   Type 'number' is not assignable to type 'string'.
+2025-07-17 02:16:58,796 - __main__ - INFO - [docker-compose up] ------
+2025-07-17 02:16:58,800 - __main__ - ERROR - [docker-compose up-ERROR] failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 2
+2025-07-17 02:16:58,800 - __main__ - ERROR - Erro ao executar comando para 'docker-compose up'. Código de saída: 1
+2025-07-17 02:16:58,800 - __main__ - CRITICAL - Falha ao iniciar os serviços Docker. A abortar o pipeline.

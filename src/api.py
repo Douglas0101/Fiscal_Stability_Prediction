@@ -5,7 +5,9 @@ from typing import Any, Dict
 
 import mlflow
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Path
+from fastapi import FastAPI, HTTPException, Path, Response
+import csv
+from io import StringIO
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import init_db
@@ -79,3 +81,55 @@ def predict(request: PredictionRequest, model_name: str = Path(..., description=
     except Exception as e:
         logger.error(f"Erro durante a previsão com o modelo '{model_name}': {e}")
         raise HTTPException(status_code=500, detail=f"Ocorreu um erro interno: {e}")
+
+@app.get("/data", tags=["Data"])
+def get_data():
+    """Retorna o conteúdo do arquivo processed_data.csv."""
+    try:
+        df = pd.read_csv(config.processed_data_path)
+        # Use um buffer de string para converter o DataFrame em CSV na memória
+        output = StringIO()
+        df.to_csv(output, index=False)
+        csv_data = output.getvalue()
+        output.close()
+        
+        return Response(content=csv_data, media_type="text/csv")
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Arquivo de dados processados não encontrado.")
+    except Exception as e:
+        logger.error(f"Erro ao ler o arquivo de dados: {e}")
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno ao processar os dados.")
+
+@app.get("/predictions/{model_name}", tags=["Predictions"])
+def get_all_predictions(model_name: str = Path(..., description=f"Modelos disponíveis: {config.models_to_run}")):
+    """Retorna as previsões para todos os dados no arquivo processed_data.csv."""
+    if model_name not in ml_models:
+        raise HTTPException(status_code=404, detail=f"Modelo '{model_name}' não encontrado. Modelos disponíveis: {list(ml_models.keys())}")
+
+    try:
+        df = pd.read_csv(config.processed_data_path)
+        model = ml_models[model_name]
+        
+        # Preparar os dados para o modelo (remover colunas não usadas)
+        features = df.drop(columns=[config.model.TARGET_VARIABLE, 'Country Name'], errors='ignore')
+        
+        # Fazer previsões
+        predictions = model.predict(features)
+        
+        # Adicionar previsões ao DataFrame
+        df['prediction'] = predictions
+        
+        # Converter para CSV
+        output = StringIO()
+        df.to_csv(output, index=False)
+        csv_data = output.getvalue()
+        output.close()
+        
+        return Response(content=csv_data, media_type="text/csv")
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Arquivo de dados processados não encontrado.")
+    except Exception as e:
+        logger.error(f"Erro durante a previsão em lote: {e}")
+        raise HTTPException(status_code=500, detail=f"Ocorreu um erro interno durante a previsão em lote: {e}")

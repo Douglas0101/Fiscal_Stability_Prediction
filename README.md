@@ -1,99 +1,172 @@
-**Dashboard de Análise de Risco Fiscal**
+Modelo Preditivo para Análise de Estabilidade Fiscal
 
-**Este projeto contém o frontend para o Dashboard de Análise de Risco Fiscal, uma aplicação moderna construída com React, Vite e TypeScript para fornecer uma interface interativa e de alto desempenho para os modelos de Machine Learning da nossa API.**
+📖 Visão Geral
 
-**✨ Funcionalidades**
+Este projeto é uma solução completa de Machine Learning para prever o índice de estabilidade fiscal de países, utilizando dados do Banco Mundial. A aplicação inclui um pipeline de ML automatizado, uma API para servir os modelos e um dashboard interativo para visualização de dados e previsões.
 
-**Interface Moderna: Design limpo e responsivo construído com Chakra UI e Tailwind CSS.**
+O objetivo é fornecer uma ferramenta robusta para análise de risco soberano, permitindo que os usuários compreendam os fatores que mais impactam a estabilidade fiscal e acessem previsões atualizadas através de uma interface moderna e intuitiva.
 
-**Temas: Suporte para modos claro, escuro e de alto contraste.**
+➡️ Acessar o Dashboard (link para a instância em execução)
 
-**Visualização de Dados: Gráficos interativos e dinâmicos com Recharts.**
+✨ Funcionalidades
+O projeto é dividido em um backend robusto e um frontend moderno:
 
-**Performance: Carregamento rápido com Vite e lazy-loading de componentes.**
+Backend (API & Pipeline de ML)
+Pipeline Automatizado: Orquestração completa do pipeline de ML com um único comando, incluindo processamento de dados, treinamento e versionamento de modelos.
 
-**Qualidade de Código: Código fortemente tipado com TypeScript.**
+Dois Modelos Preditivos: Utiliza XGBoost para performance e Explainable Boosting Machine (EBM) para interpretabilidade.
 
-🚀 Como Iniciar (Ambiente Local)
-Para executar este projeto fora do ambiente Docker, siga os passos abaixo.
+MLOps Robusto: Rastreamento de experimentos e versionamento de modelos com MLflow.
 
-**Pré-requisitos**
+API de Alta Performance: Uma API construída com FastAPI para servir os modelos e fornecer previsões.
 
-**Node.js (v18 ou superior)**
+Banco de Dados: Gerenciamento de dados e persistência com SQLAlchemy.
 
-**npm ou yarn**
+Interpretabilidade: Geração de gráficos de importância de features e valores SHAP para entender as decisões do modelo.
 
-**Instalação**
-**Clone o repositório (se aplicável) e navegue até a pasta do projeto.**
+Frontend (Dashboard)
+Interface Moderna: Design limpo e responsivo construído com Chakra UI e Tailwind CSS.
 
-**Instale as dependências necessárias:**
+Visualização Interativa: Gráficos dinâmicos e de alto desempenho com Recharts para explorar os dados e os resultados do modelo.
 
-**Bash**
+Performance: Carregamento rápido e otimizado com Vite e código fortemente tipado com TypeScript.
 
-**npm install**
-**Crie um ficheiro .env.local na raiz do projeto para configurar as variáveis de ambiente:**
+🛠️ Tecnologias Utilizadas
 
-**VITE_API_BASE_URL=http://localhost:8000**
+Área
 
-**Inicie o servidor de desenvolvimento:**
+Tecnologias
 
-**Bash**
+Backend & ML
 
-**npm run dev**
-**A aplicação estará disponível em http://localhost:5173 (ou outra porta indicada pelo Vite).**
+Python, FastAPI, SQLAlchemy, Pydantic, XGBoost, InterpretML (EBM), MLflow, SHAP, Scikit-learn
 
-**scripts Disponíveis**
-**npm run dev: Inicia o servidor de desenvolvimento com Hot-Reload.**
+Frontend
 
-**npm run build: Compila a aplicação TypeScript e gera os ficheiros de produção na pasta /dist.**
+React, TypeScript, Vite, Chakra UI, Tailwind CSS, Recharts
 
-**npm run lint: Executa o linter para verificar a qualidade do código.**
+Infra & DevOps
 
-**npm run preview: Inicia um servidor local para visualizar a versão de produção.**
+Docker, Docker Compose, Nginx
 
-**🏛️ Estrutura de Pastas**
-**O projeto segue uma arquitetura modular para facilitar a manutenção e escalabilidade.**
+Banco de Dados
 
-/src
+PostgreSQL (produção), SQLite (desenvolvimento)
 
-├── /assets         # Imagens, fontes e outros ficheiros estáticos
 
-├── /components     # Componentes React reutilizáveis (ex: botões, gráficos)
-│   ├── /charts     # Componentes específicos de gráficos
-│   └── /layout     # Componentes de layout (Header, Sidebar, etc.)
+Exportar para as Planilhas
 
-├── /contexts       # Contextos React para gerenciamento de estado global
+🏛️ Arquitetura e Estrutura do Projeto
 
-├── /hooks          # Hooks customizados com lógica de negócio
+A aplicação é totalmente containerizada com Docker e orquestrada com Docker Compose, garantindo um ambiente de desenvolvimento e produção consistente.
 
-├── /pages          # Componentes que representam as páginas da aplicação
+/
+├── .github/          # Workflows de CI/CD (ex: GitHub Actions)
 
-├── /services       # Funções para comunicação com APIs externas (Axios)
+├── data/             # Dados brutos, processados e para features
 
-├── /styles         # Ficheiros de CSS global e configuração de temas
+├── dashboard-fiscal-stability/ # Código-fonte do frontend em React
 
-├── /types          # Definições de tipos TypeScript
+├── mlflow_docker/    # Dockerfile para o serviço do MLflow
 
-└── App.tsx         # Componente raiz da aplicação
+├── mlruns_data/      # Artefatos e logs do MLflow
 
-└── main.tsx        # Ponto de entrada da aplicação
+├── notebooks/        # Notebooks para exploração e modelagem inicial
 
-## 🤝 Como Contribuir
+├── src/              # Código-fonte do backend (API e pipeline)
 
-#### Agradecemos o seu interesse em contribuir! Por favor, siga as seguintes diretrizes:
+├── tests/            # Testes unitários e de integração
 
-#### Crie um fork do projeto.
+├── .env.example      # Exemplo de arquivo de variáveis de ambiente
 
-**Crie uma nova branch para a sua funcionalidade (git checkout -b feature/minha-feature).**
+├── docker-compose.yml# Orquestração dos serviços (API, DB, MLflow, Frontend)
 
-**Faça o commit das suas alterações (git commit -m 'Adiciona nova feature').**
+├── Dockerfile        # Container para a API Python
 
-**Faça o push para a sua branch (git push origin feature/minha-feature).**
+└── main.py           # Orquestrador do pipeline de ML
 
-**Abra um Pull Request.**
+🚀 Como Iniciar (Ambiente Local com Docker)
 
-**Certifique-se de que o seu código segue os padrões de estilo do projeto e que todos os testes passam.**
+Este projeto foi desenhado para ser executado com Docker. Siga os passos abaixo para iniciar todos os serviços.
 
+Pré-requisitos
+
+Docker
+
+Docker Compose
+
+Python 3.10+ (apenas para executar o script orquestrador main.py)
+
+Instalação e Execução
+Clone o repositório:
+
+Bash
+
+**git clone https://github.com/douglas0101/fiscal_stability_prediction.git
+cd fiscal_stability_prediction
+Configure as Variáveis de Ambiente:
+Copie o arquivo de exemplo e preencha com suas configurações.**
+
+Bash
+
+**cp .env.example .env
+Edite o arquivo .env se precisar alterar portas ou credenciais do banco de dados.**
+
+**Instale as dependências do orquestrador:**
+
+Bash
+
+**pip install -r requirements.txt
+Execute o Orquestrador do Pipeline:
+Este comando irá subir todos os contêineres Docker, executar o pipeline de processamento de dados, treinar os modelos e, ao final, reiniciar a API para carregar os novos artefatos.**
+
+Bash
+
+**python main.py
+O que esperar após a execução:
+API FastAPI: Disponível em http://localhost:8000/docs.**
+
+**Dashboard React: Disponível em http://localhost:8501.**
+
+**MLflow UI: Disponível em http://localhost:5000.**
+
+🕹️ Uso
+Executando o Pipeline de ML Manualmente
+Você pode executar partes do pipeline de forma isolada através do docker-compose exec:
+
+Bash
+
+# Executar o processamento de dados
+**docker-compose --env-file .env exec api python src/data_processing.py**
+
+# Treinar um modelo específico (ex: xgb)
+**docker-compose --env-file .env exec api python src/train.py xgb
+API Endpoints
+A API expõe os seguintes endpoints principais:**
+
+GET /api/v1/health: Verifica a saúde da aplicação.
+
+POST /api/v1/predict: Envia dados de um país/ano para obter uma previsão de estabilidade fiscal.
+
+GET /api/v1/countries: Lista os países disponíveis para análise.
+
+Consulte a documentação interativa em http://localhost:8000/docs para detalhes completos.
+
+🤝 Como Contribuir
+
+Agradecemos o seu interesse em contribuir! Por favor, siga as seguintes diretrizes:
+
+Crie um fork do projeto.
+
+Crie uma nova branch para a sua funcionalidade (git checkout -b feature/minha-feature).
+
+Faça o commit das suas alterações (git commit -m 'Adiciona nova feature').
+
+Faça o push para a sua branch (git push origin feature/minha-feature).
+
+Abra um Pull Request.
+
+Certifique-se de que o seu código segue os padrões de estilo do projeto e que todos os testes passam.
 
 
 

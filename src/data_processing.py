@@ -36,6 +36,14 @@ class DataProcessor:
         for col in df.columns:
             if df[col].dtype == 'object' and col not in self.config.model.CATEGORICAL_FEATURES:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
+
+        # Remover colunas com mais de 80% de valores ausentes
+        threshold = len(df) * 0.8
+        cols_to_drop = df.columns[df.isnull().sum() > threshold]
+        if len(cols_to_drop) > 0:
+            logger.info(f"Removendo colunas com alta % de valores ausentes: {list(cols_to_drop)}")
+            df = df.drop(columns=cols_to_drop)
+
         return df
 
     def save_data(self, df: pd.DataFrame):
