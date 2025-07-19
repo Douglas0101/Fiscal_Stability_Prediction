@@ -1,0 +1,29 @@
+channels:
+- conda-forge
+dependencies:
+- python=3.13.5
+- pip<=25.1.1
+- pip:
+  - mlflow==3.1.1
+  - bottleneck==1.5.0
+  - cffi==1.17.1
+  - cloudpickle==3.1.1
+  - colorama==0.4.6
+  - cuda-core==0.3.1
+  - cupy==13.5.1
+  - cytoolz==1.0.1
+  - defusedxml==0.7.1
+  - distributed-ucxx==0.45.0
+  - graphviz==0.20.1
+  - lightgbm==4.6.0
+  - lz4==4.4.4
+  - matplotlib==3.10.3
+  - numpy==2.2.6
+  - optuna==3.6.1
+  - pandas==2.3.1
+  - pyarrow==19.0.1
+  - scikit-learn==1.6.1
+  - scipy==1.16.0
+  - xarray==2025.7.1
+  - zstandard==0.23.0
+name: mlflow-env
